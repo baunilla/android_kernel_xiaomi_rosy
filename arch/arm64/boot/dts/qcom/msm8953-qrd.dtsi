@@ -303,6 +303,18 @@
 	status = "disabled";
 };
 
+&sdc2_cmd_on {
+	config {
+		drive-strength=<12>;
+	};
+};
+
+&sdc2_data_on {
+	config {
+		drive-strength=<12>;
+	};
+};
+
 &wsa881x_i2c_f {
         status = "disabled";
 };
