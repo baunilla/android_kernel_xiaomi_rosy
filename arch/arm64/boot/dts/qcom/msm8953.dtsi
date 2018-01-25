@@ -1785,6 +1785,7 @@
 
 		USB3_GDSC-supply = <&gdsc_usb30>;
 		vbus_dwc3-supply = <&smbcharger_charger_otg>;
+		extcon = <&qpnp_smbcharger>;
 		qcom,usb-dbm = <&dbm_1p5>;
 		qcom,msm-bus,name = "usb3";
 		qcom,msm-bus,num-cases = <2>;
