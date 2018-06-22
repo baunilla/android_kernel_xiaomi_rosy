@@ -269,6 +269,7 @@
 	qcom,fastchg-current-customize-cool = <300>;
 	qcom,fastchg-current-bat-cool = <900>;
 	qcom,fastchg-current-ma = <2000>;
+	dpdm-supply = <&qusb_phy>;
 };
 
 &qpnp_fg {
