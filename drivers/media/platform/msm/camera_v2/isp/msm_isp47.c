@@ -1885,8 +1885,8 @@ void msm_vfe47_cfg_axi_ub_equal_default(
 			continue;
 		}
 
-		if (frame_src != SRC_TO_INTF(
-			HANDLE_TO_IDX(axi_data->free_wm[i])))
+		if (!axi_data->free_wm[i] || frame_src != SRC_TO_INTF(
+				HANDLE_TO_IDX(axi_data->free_wm[i])))
 			continue;
 
 		if (frame_src == VFE_PIX_0) {
