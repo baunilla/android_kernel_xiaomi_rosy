@@ -41,7 +41,6 @@
 #include <linux/fb.h>
 #include <linux/pm_qos.h>
 #include <linux/cpufreq.h>
-#include <linux/wakelock.h>
 #include "gf_spi.h"
 
 #if defined(USE_SPI_BUS)
@@ -71,7 +70,7 @@ static int SPIDEV_MAJOR;
 static DECLARE_BITMAP(minors, N_SPI_MINORS);
 static LIST_HEAD(device_list);
 static DEFINE_MUTEX(device_list_lock);
-static struct wake_lock fp_wake_src;
+static struct wakeup_source fp_wake_src;
 static struct gf_dev gf;
 
 static struct gf_key_map maps[] = {
@@ -322,7 +321,7 @@ static irqreturn_t gf_irq(int irq, void *handle)
 	char msg = GF_NET_EVENT_IRQ;
 	struct gf_dev *gf_dev = &gf;
 
-	wake_lock_timeout(&fp_wake_src, msecs_to_jiffies(WAKELOCK_HOLD_TIME));
+	__pm_wakeup_event(&fp_wake_src, msecs_to_jiffies(WAKELOCK_HOLD_TIME));
 	sendnlmsg(&msg);
 	if ((gf_dev->wait_finger_down == true) && (gf_dev->device_available == 1) && (gf_dev->fb_black == 1)) {
 		gf_dev->wait_finger_down = false;
@@ -793,7 +792,7 @@ static int gf_probe(struct platform_device *pdev)
 	gf_dev->notifier = goodix_noti_block;
 	fb_register_client(&gf_dev->notifier);
 
-	wake_lock_init(&fp_wake_src, WAKE_LOCK_SUSPEND, "fp_wake_src");
+	wakeup_source_init(&fp_wake_src, "fp_wake_src");
 
 	pr_info("version V%d.%d.%02d\n", VER_MAJOR, VER_MINOR, PATCH_LEVEL);
 
@@ -831,7 +830,7 @@ static int gf_remove(struct platform_device *pdev)
 {
 	struct gf_dev *gf_dev = &gf;
 
-	wake_lock_destroy(&fp_wake_src);
+	wakeup_source_trash(&fp_wake_src);
 	fb_unregister_client(&gf_dev->notifier);
 	if (gf_dev->input)
 		input_unregister_device(gf_dev->input);
