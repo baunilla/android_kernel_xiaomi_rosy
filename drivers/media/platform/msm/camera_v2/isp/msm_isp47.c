@@ -1713,20 +1713,23 @@ void msm_vfe47_cfg_axi_ub_equal_default(
 	uint32_t wm_ub_size;
 	uint64_t delta;
 
-	for (i = 0; i < axi_data->hw_info->num_wm; i++) {
-		if (axi_data->free_wm[i]) {
-			num_used_wms++;
-			total_image_size +=
-				axi_data->wm_image_size[i];
+	if (frame_src == VFE_PIX_0) {
+		for (i = 0; i < axi_data->hw_info->num_wm; i++) {
+			if (axi_data->free_wm[i]) {
+				num_used_wms++;
+				total_image_size +=
+					axi_data->wm_image_size[i];
+			}
 		}
+		if (!total_image_size) {
+			pr_err("%s: Error total_image_size is 0\n", __func__);
+			return;
+		}
+		prop_size = vfe_dev->hw_info->vfe_ops.axi_ops.
+			get_ub_size(vfe_dev) -
+			axi_data->hw_info->min_wm_ub * num_used_wms;
 	}
-	if (!total_image_size) {
-		pr_err("%s: Error total_image_size is 0\n", __func__);
-		return;
-	}
-	prop_size = vfe_dev->hw_info->vfe_ops.axi_ops.
-		get_ub_size(vfe_dev) -
-		axi_data->hw_info->min_wm_ub * num_used_wms;
+
 	for (i = 0; i < axi_data->hw_info->num_wm; i++) {
 		if (!axi_data->free_wm[i]) {
 			msm_camera_io_w(0,
