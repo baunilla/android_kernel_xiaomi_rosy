@@ -1,0 +1,3 @@
+[submodule "drivers/staging/prima"]
+	path = drivers/staging/prima
+	url = https://github.com/baunilla/android_qcom_opensource_wlan_prima.git
