@@ -97,9 +97,9 @@
  */
 #define FTS_DEBUG_EN                            0
 
-#define FTS_LOCK_DOWN_INFO			1
+#define FTS_LOCK_DOWN_INFO			0
 
-#define FTS_CAT_RAWDATA			1
+#define FTS_CAT_RAWDATA			0
 
 /*
  * Linux MultiTouch Protocol
