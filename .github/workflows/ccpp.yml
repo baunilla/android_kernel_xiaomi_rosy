@@ -9,11 +9,11 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
+    - name: init
+      run: git submodule init
+    - name: pull
+      run: git submodule update
     - name: configure
       run: make x86_64_cuttlefish_defconfig
     - name: make
       run: make cc=clang
-    - name: make check
-      run: make check
-    - name: make distcheck
-      run: make distcheck
