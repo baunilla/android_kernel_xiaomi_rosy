@@ -10,9 +10,9 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: configure
-      run: ./configure
+      run: make x86_64_cuttlefish_defconfig
     - name: make
-      run: make
+      run: make cc=clang
     - name: make check
       run: make check
     - name: make distcheck
