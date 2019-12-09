@@ -162,6 +162,18 @@ config PM_RUNTIME
 	  responsible for the actual handling of the autosuspend requests and
 	  wake-up events.
 
+config PM_WAKELOCKS_SENSOR_IND_HACK
+	bool "Poor timeout hack for stuck sensor_ind wakelock"
+	depends on PM_WAKELOCKS
+	default y
+	---help---
+	Adds a very poor hack that converts the sensor_ind wakelock
+	to a timed one on-the-fly. This is unfortunately necessary
+	for broken DSP firmwares on old devices, combined with
+	proprietary sensor binaries which don't account for that.
+	To mitigate this issue, this configuration option applies
+	a timeout to this wakelock.
+
 config PM
 	def_bool y
 	depends on PM_SLEEP || PM_RUNTIME
