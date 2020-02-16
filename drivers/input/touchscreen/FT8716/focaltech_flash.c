@@ -364,10 +364,6 @@ u32 fts_getsize(u8 fw_type)
     else if (fw_type == PRAMBOOT_SIZE)
         fw_len = sizeof(aucFW_PRAM_BOOT);
 #endif
-#if (FTS_CHIP_TYPE == _FT8006)
-    else if (fw_type == LCD_CFG_SIZE)
-        fw_len = sizeof(CTPM_LCD_CFG);
-#endif
 
     return fw_len;
 }
@@ -492,7 +488,6 @@ int fts_ctpm_lcd_cfg_upgrade(struct i2c_client *client)
     return i_ret;
 }
 
-#if (!(FTS_UPGRADE_STRESS_TEST))
 /************************************************************************
 * Name: fts_ctpm_check_fw_status
 * Brief: Check App is valid or not
@@ -705,7 +700,6 @@ int fts_ctpm_auto_upgrade(struct i2c_client *client)
 
     return i_ret;
 }
-#endif
 
 #if FTS_AUTO_UPGRADE_EN
 static void fts_ctpm_update_work_func(struct work_struct *work)
@@ -714,11 +708,6 @@ static void fts_ctpm_update_work_func(struct work_struct *work)
 
     FTS_DEBUG("[UPGRADE]******************************FTS enter upgrade******************************");
     fts_irq_disable();
-
-    /* esd check */
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_switch(DISABLE);
-#endif
 
     i_ret = fts_ctpm_auto_upgrade(fts_i2c_client);
     if (i_ret < 0)
@@ -733,9 +722,6 @@ static void fts_ctpm_update_work_func(struct work_struct *work)
         FTS_ERROR("[UPGRADE]**********LCD cfg upgrade failed*********");
 #endif
 
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_switch(ENABLE);
-#endif
     fts_irq_enable();
 
     FTS_DEBUG("[UPGRADE]******************************FTS exit upgrade******************************");

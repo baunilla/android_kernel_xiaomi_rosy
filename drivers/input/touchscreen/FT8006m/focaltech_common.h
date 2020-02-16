@@ -133,32 +133,6 @@ int ft8006m_create_sysfs(struct i2c_client *client);
 int ft8006m_remove_sysfs(struct i2c_client *client);
 #endif
 
-/* ESD */
-#if FTS_ESDCHECK_EN
-int ft8006m_esdcheck_init(void);
-int ft8006m_esdcheck_exit(void);
-int ft8006m_esdcheck_switch(bool enable);
-int ft8006m_esdcheck_proc_busy(bool proc_debug);
-int ft8006m_esdcheck_set_intr(bool intr);
-int ft8006m_esdcheck_suspend(void);
-int ft8006m_esdcheck_resume(void);
-int ft8006m_esdcheck_get_status(void);
-#endif
-
-/* Production test */
-#if FTS_TEST_EN
-int ft8006m_test_init(struct i2c_client *client);
-int ft8006m_test_exit(struct i2c_client *client);
-#endif
-
-#if FTS_LOCK_DOWN_INFO
-int ft8006m_lockdown_init(struct i2c_client *client);
-#endif
-
-#if FTS_CAT_RAWDATA
-int ft8006m_rawdata_init(struct i2c_client *client);
-#endif
-
 /* Point Report Check*/
 #if FTS_POINT_REPORT_CHECK_EN
 int ft8006m_point_report_check_init(void);
@@ -167,7 +141,6 @@ void ft8006m_point_report_check_queue_work(void);
 #endif
 
 /* Other */
-extern int ft8006m_g_show_log;
 int ft8006m_reset_proc(int hdelayms);
 int ft8006m_wait_tp_to_valid(struct i2c_client *client);
 void ft8006m_tp_state_recovery(struct i2c_client *client);
@@ -181,33 +154,11 @@ void ft8006m_irq_enable(void);
 /*****************************************************************************
 * DEBUG function define here
 *****************************************************************************/
-#if FTS_DEBUG_EN
-#define FTS_DEBUG_LEVEL     1
-
-#if (FTS_DEBUG_LEVEL == 2)
-#define FTS_DEBUG(fmt, args...) printk(KERN_ERR "[FTS8006m][%s]"fmt"\n", __func__, ##args)
-#define FTS_FUNC_ENTER() printk(KERN_ERR "[FTS8006m]%s: Enter\n", __func__)
-#define FTS_FUNC_EXIT()  printk(KERN_ERR "[FTS8006m]%s: Exit(%d)\n", __func__, __LINE__)
-#else
-#define FTS_DEBUG(fmt, args...) printk(KERN_ERR "[FTS8006m]"fmt"\n", ##args)
-#define FTS_FUNC_ENTER()
-#define FTS_FUNC_EXIT()
-#endif
-
-#else
 #define FTS_DEBUG(fmt, args...)
+#define FTS_ERROR(fmt, args...)
+#define FTS_INFO(fmt, args...)
 #define FTS_FUNC_ENTER()
 #define FTS_FUNC_EXIT()
-#endif
-
-#define FTS_INFO(fmt, args...) do { \
-            if (ft8006m_g_show_log) {printk(KERN_ERR "[FTS8006m][Info]"fmt"\n", ##args); } \
-        }  while (0)
-
-#define FTS_ERROR(fmt, args...)  do { \
-             if (ft8006m_g_show_log) {printk(KERN_ERR "[FTS8006m][Error]"fmt"\n", ##args); } \
-        }  while (0)
-
 
 #if FTS_GESTURE_EN
 #define GESTURE_NODE "onoff"

@@ -77,48 +77,6 @@ static struct
 /*****************************************************************************
 * Static function prototypes
 *****************************************************************************/
-#if FTS_ESDCHECK_EN
-static void esd_process(u8 *writebuf, int buflen, bool flag)
-{
-    if (flag)
-    {
-        if ((writebuf[1] == 0xFC) && (writebuf[2] == 0x55) && (buflen == 0x03))
-        {
-            /* Upgrade command */
-            FTS_DEBUG("[ESD]: Upgrade command(%x %x %x)!!", writebuf[0], writebuf[1], writebuf[2]);
-            fts_esdcheck_switch(DISABLE);
-        }
-        else if ((writebuf[1] == 0x00) && (writebuf[2] == 0x40) && (buflen == 0x03))
-        {
-            /* factory mode bit 4 5 6 */
-            FTS_DEBUG("[ESD]: Entry factory mode(%x %x %x)!!", writebuf[0], writebuf[1], writebuf[2]);
-            fts_esdcheck_switch(DISABLE);
-        }
-        else if ((writebuf[1] == 0x00) && (writebuf[2] == 0x00) && (buflen == 0x03))
-        {
-            /* normal mode bit 4 5 6 */
-            FTS_DEBUG("[ESD]: Exit factory mode(%x %x %x)!!", writebuf[0], writebuf[1], writebuf[2]);
-            fts_esdcheck_switch(ENABLE);
-        }
-        else
-        {
-            fts_esdcheck_proc_busy(1);
-        }
-    }
-    else
-    {
-        if ((writebuf[1] == 0x07) && (buflen == 0x02))
-        {
-            FTS_DEBUG("[ESD]: Upgrade finish-trigger reset(07)(%x %x)!!", writebuf[0], writebuf[1]);
-            fts_esdcheck_switch(ENABLE);
-        }
-        else
-        {
-            fts_esdcheck_proc_busy(0);
-        }
-    }
-}
-#endif
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
 /*interface of write proc*/
 /************************************************************************
@@ -141,9 +99,7 @@ static ssize_t fts_debug_write(struct file *filp, const char __user *buff, size_
         FTS_DEBUG("[APK]: copy from user error!!");
         return -EFAULT;
     }
-#if FTS_ESDCHECK_EN
-    esd_process(writebuf, buflen, 1);
-#endif
+
     proc_operate_mode = writebuf[0];
     switch (proc_operate_mode)
     {
@@ -155,14 +111,8 @@ static ssize_t fts_debug_write(struct file *filp, const char __user *buff, size_
             upgrade_file_path[buflen-1] = '\0';
             FTS_DEBUG("%s\n", upgrade_file_path);
             fts_irq_disable();
-#if FTS_ESDCHECK_EN
-            fts_esdcheck_switch(DISABLE);
-#endif
             if (fts_updatefun_curr.upgrade_with_app_bin_file)
                 ret = fts_updatefun_curr.upgrade_with_app_bin_file(fts_i2c_client, upgrade_file_path);
-#if FTS_ESDCHECK_EN
-            fts_esdcheck_switch(ENABLE);
-#endif
             fts_irq_enable();
             if (ret < 0)
             {
@@ -173,16 +123,6 @@ static ssize_t fts_debug_write(struct file *filp, const char __user *buff, size_
 
         case PROC_SET_TEST_FLAG:
             FTS_DEBUG("[APK]: PROC_SET_TEST_FLAG = %x!!", writebuf[1]);
-#if FTS_ESDCHECK_EN
-            if (writebuf[1] == 0)
-            {
-                fts_esdcheck_switch(DISABLE);
-            }
-            else
-            {
-                fts_esdcheck_switch(ENABLE);
-            }
-#endif
             break;
         case PROC_READ_REGISTER:
             writelen = 1;
@@ -244,10 +184,6 @@ static ssize_t fts_debug_write(struct file *filp, const char __user *buff, size_
             break;
     }
 
-#if FTS_ESDCHECK_EN
-    esd_process(writebuf, buflen, 0);
-#endif
-
     if (ret < 0)
     {
         return ret;
@@ -274,9 +210,6 @@ static ssize_t fts_debug_read(struct file *filp, char __user *buff, size_t count
     u8 regvalue = 0x00, regaddr = 0x00;
     unsigned char buf[READ_BUF_SIZE];
 
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_proc_busy(1);
-#endif
     switch (proc_operate_mode)
     {
         case PROC_UPGRADE:
@@ -293,9 +226,6 @@ static ssize_t fts_debug_read(struct file *filp, char __user *buff, size_t count
             ret = fts_i2c_read(fts_i2c_client, NULL, 0, buf, readlen);
             if (ret < 0)
             {
-#if FTS_ESDCHECK_EN
-                fts_esdcheck_proc_busy(0);
-#endif
                 FTS_ERROR("[APK]: read iic error!!");
                 return ret;
             }
@@ -306,9 +236,6 @@ static ssize_t fts_debug_read(struct file *filp, char __user *buff, size_t count
             ret = fts_i2c_read(fts_i2c_client, NULL, 0, buf, readlen);
             if (ret < 0)
             {
-#if FTS_ESDCHECK_EN
-                fts_esdcheck_proc_busy(0);
-#endif
                 FTS_ERROR("[APK]: read iic error!!");
                 return ret;
             }
@@ -320,10 +247,6 @@ static ssize_t fts_debug_read(struct file *filp, char __user *buff, size_t count
         default:
             break;
     }
-
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_proc_busy(0);
-#endif
 
     if (copy_to_user(buff, buf, num_read_chars))
     {
@@ -362,9 +285,7 @@ static int fts_debug_write(struct file *filp,
         FTS_ERROR("[APK]: copy from user error!!");
         return -EFAULT;
     }
-#if FTS_ESDCHECK_EN
-    esd_process(writebuf, buflen, 1);
-#endif
+
     proc_operate_mode = writebuf[0];
     switch (proc_operate_mode)
     {
@@ -377,14 +298,8 @@ static int fts_debug_write(struct file *filp,
             upgrade_file_path[buflen-1] = '\0';
             FTS_DEBUG("%s\n", upgrade_file_path);
             fts_irq_disable();
-#if FTS_ESDCHECK_EN
-            fts_esdcheck_switch(DISABLE);
-#endif
             if (fts_updatefun_curr.upgrade_with_app_bin_file)
                 ret = fts_updatefun_curr.upgrade_with_app_bin_file(fts_i2c_client, upgrade_file_path);
-#if FTS_ESDCHECK_EN
-            fts_esdcheck_switch(ENABLE);
-#endif
             fts_irq_enable();
             if (ret < 0)
             {
@@ -394,16 +309,6 @@ static int fts_debug_write(struct file *filp,
         break;
         case PROC_SET_TEST_FLAG:
             FTS_DEBUG("[APK]: PROC_SET_TEST_FLAG = %x!!", writebuf[1]);
-#if FTS_ESDCHECK_EN
-            if (writebuf[1] == 0)
-            {
-                fts_esdcheck_switch(DISABLE);
-            }
-            else
-            {
-                fts_esdcheck_switch(ENABLE);
-            }
-#endif
             break;
         case PROC_READ_REGISTER:
             writelen = 1;
@@ -465,10 +370,6 @@ static int fts_debug_write(struct file *filp,
             break;
     }
 
-#if FTS_ESDCHECK_EN
-    esd_process(writebuf, buflen, 0);
-#endif
-
     if (ret < 0)
     {
         return ret;
@@ -496,9 +397,6 @@ static int fts_debug_read(char *page, char **start,
     int readlen = 0;
     u8 regvalue = 0x00, regaddr = 0x00;
 
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_proc_busy(1);
-#endif
     switch (proc_operate_mode)
     {
         case PROC_UPGRADE:
@@ -515,9 +413,6 @@ static int fts_debug_read(char *page, char **start,
             ret = fts_i2c_read(fts_i2c_client, NULL, 0, buf, readlen);
             if (ret < 0)
             {
-#if FTS_ESDCHECK_EN
-                fts_esdcheck_proc_busy(0);
-#endif
                 FTS_ERROR("[APK]: read iic error!!");
                 return ret;
             }
@@ -528,9 +423,6 @@ static int fts_debug_read(char *page, char **start,
             ret = fts_i2c_read(fts_i2c_client, NULL, 0, buf, readlen);
             if (ret < 0)
             {
-#if FTS_ESDCHECK_EN
-                fts_esdcheck_proc_busy(0);
-#endif
                 FTS_ERROR("[APK]: read iic error!!");
                 return ret;
             }
@@ -542,10 +434,6 @@ static int fts_debug_read(char *page, char **start,
         default:
             break;
     }
-
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_proc_busy(0);
-#endif
 
     memcpy(page, buf, num_read_chars);
     return num_read_chars;
@@ -654,16 +542,11 @@ static ssize_t fts_tpfwver_show(struct device *dev, struct device_attribute *att
 
     mutex_lock(&fts_input_dev->mutex);
 
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_proc_busy(1);
-#endif
     if (fts_i2c_read_reg(fts_i2c_client, FTS_REG_FW_VER, &fwver) < 0)
     {
         num_read_chars = snprintf(buf, PAGE_SIZE, "I2c transfer error!\n");
     }
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_proc_busy(0);
-#endif
+
     if (fwver == 255)
         num_read_chars = snprintf(buf, PAGE_SIZE, "get tp fw version fail!\n");
     else
@@ -885,9 +768,7 @@ static ssize_t fts_tprwreg_store(struct device *dev, struct device_attribute *at
         FTS_ERROR("%s() - ERROR: Could not convert the given input to a number. The given input was: \"%s\"", __FUNCTION__, buf);
         goto error_return;
     }
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_proc_busy(1);
-#endif
+
     if (2 == num_read_chars)
     {
         g_rwreg_result.op = 0;
@@ -926,9 +807,7 @@ static ssize_t fts_tprwreg_store(struct device *dev, struct device_attribute *at
             g_rwreg_result.result = 0;
         }
     }
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_proc_busy(0);
-#endif
+
 error_return:
     mutex_unlock(&fts_input_dev->mutex);
 
@@ -960,14 +839,10 @@ static ssize_t fts_fwupdate_store(struct device *dev, struct device_attribute *a
 
     mutex_lock(&fts_input_dev->mutex);
     fts_irq_disable();
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_switch(DISABLE);
-#endif
+
     if (fts_updatefun_curr.upgrade_with_app_i_file)
         fts_updatefun_curr.upgrade_with_app_i_file(client);
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_switch(ENABLE);
-#endif
+
     fts_irq_enable();
     mutex_unlock(&fts_input_dev->mutex);
 
@@ -1004,14 +879,10 @@ static ssize_t fts_fwupgradeapp_store(struct device *dev, struct device_attribut
 
     mutex_lock(&fts_input_dev->mutex);
     fts_irq_disable();
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_switch(DISABLE);
-#endif
+
     if (fts_updatefun_curr.upgrade_with_app_bin_file)
         fts_updatefun_curr.upgrade_with_app_bin_file(client, fwname);
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_switch(ENABLE);
-#endif
+
     fts_irq_enable();
     mutex_unlock(&fts_input_dev->mutex);
 
@@ -1049,52 +920,6 @@ static ssize_t fts_driverversion_store(struct device *dev, struct device_attribu
     return -EPERM;
 }
 
-#if FTS_ESDCHECK_EN
-/************************************************************************
-* Name: fts_esdcheck_store
-* Brief:  no
-* Input: device, device attribute, char buf, char count
-* Output: no
-* Return: EPERM
-***********************************************************************/
-static ssize_t fts_esdcheck_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
-{
-    mutex_lock(&fts_input_dev->mutex);
-    if (FTS_SYSFS_ECHO_ON(buf))
-    {
-        FTS_DEBUG("enable esdcheck");
-        fts_esdcheck_switch(ENABLE);
-    }
-    else if (FTS_SYSFS_ECHO_OFF(buf))
-    {
-        FTS_DEBUG("disable esdcheck");
-        fts_esdcheck_switch(DISABLE);
-    }
-    mutex_unlock(&fts_input_dev->mutex);
-
-    return -EPERM;
-}
-
-/************************************************************************
-* Name: fts_esdcheck_show
-* Brief:  no
-* Input: device, device attribute, char buf
-* Output: no
-* Return: EPERM
-***********************************************************************/
-static ssize_t fts_esdcheck_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-    int count;
-
-    mutex_lock(&fts_input_dev->mutex);
-
-    count = sprintf(buf, "Esd check: %s\n", fts_esdcheck_get_status() ? "On" : "Off");
-
-    mutex_unlock(&fts_input_dev->mutex);
-
-    return count;
-}
-#endif
 /************************************************************************
 * Name: fts_module_config_show
 * Brief:  no
@@ -1109,12 +934,10 @@ static ssize_t fts_module_config_show(struct device *dev, struct device_attribut
     mutex_lock(&fts_input_dev->mutex);
 
     count += sprintf(buf, "FTS_CHIP_TYPE: \t\t\t%04X\n", FTS_CHIP_TYPE);
-    count += sprintf(buf+count, "FTS_DEBUG_EN: \t\t\t%s\n", FTS_DEBUG_EN ? "ON" : "OFF");
 #if defined(FTS_MT_PROTOCOL_B_EN)
     count += sprintf(buf+count, "TS_MT_PROTOCOL_B_EN: \t\t%s\n", FTS_MT_PROTOCOL_B_EN ? "ON" : "OFF");
 #endif
     count += sprintf(buf+count, "FTS_GESTURE_EN: \t\t%s\n", FTS_GESTURE_EN ? "ON" : "OFF");
-    count += sprintf(buf+count, "FTS_ESDCHECK_EN: \t\t%s\n", FTS_ESDCHECK_EN ? "ON" : "OFF");
 #if defined(FTS_PSENSOR_EN)
     count += sprintf(buf+count, "FTS_PSENSOR_EN: \t\t%s\n", FTS_PSENSOR_EN ? "ON" : "OFF");
 #endif
@@ -1125,7 +948,6 @@ static ssize_t fts_module_config_show(struct device *dev, struct device_attribut
     count += sprintf(buf+count, "FTS_REPORT_PRESSURE_EN: \t\t%s\n", FTS_REPORT_PRESSURE_EN ? "ON" : "OFF");
     count += sprintf(buf+count, "FTS_FORCE_TOUCH_EN: \t\t%s\n", FTS_FORCE_TOUCH_EN ? "ON" : "OFF");
 
-    count += sprintf(buf+count, "FTS_TEST_EN: \t\t\t%s\n", FTS_TEST_EN ? "ON" : "OFF");
     count += sprintf(buf+count, "FTS_APK_NODE_EN: \t\t%s\n", FTS_APK_NODE_EN ? "ON" : "OFF");
     count += sprintf(buf+count, "FTS_POWER_SOURCE_CUST_EN: \t%s\n", FTS_POWER_SOURCE_CUST_EN ? "ON" : "OFF");
     count += sprintf(buf+count, "FTS_AUTO_UPGRADE_EN: \t\t%s\n", FTS_AUTO_UPGRADE_EN ? "ON" : "OFF");
@@ -1147,50 +969,6 @@ static ssize_t fts_module_config_store(struct device *dev, struct device_attribu
     return -EPERM;
 }
 
-/************************************************************************
-* Name: fts_show_log_show
-* Brief:  no
-* Input: device, device attribute, char buf
-* Output: no
-* Return: EPERM
-***********************************************************************/
-static ssize_t fts_show_log_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-    int count;
-
-    mutex_lock(&fts_input_dev->mutex);
-
-    count = sprintf(buf, "Log: %s\n", g_show_log ? "On" : "Off");
-
-    mutex_unlock(&fts_input_dev->mutex);
-
-    return count;
-}
-/************************************************************************
-* Name: fts_show_log_store
-* Brief:  no
-* Input: device, device attribute, char buf, char count
-* Output: no
-* Return: EPERM
-***********************************************************************/
-static ssize_t fts_show_log_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
-{
-    /* place holder for future use */
-
-    mutex_lock(&fts_input_dev->mutex);
-    if (FTS_SYSFS_ECHO_ON(buf))
-    {
-        FTS_DEBUG("enable show log info/error");
-        g_show_log = 1;
-    }
-    else if (FTS_SYSFS_ECHO_OFF(buf))
-    {
-        FTS_DEBUG("disable show log info/error");
-        g_show_log = 0;
-    }
-    mutex_unlock(&fts_input_dev->mutex);
-    return count;
-}
 /************************************************************************
 * Name: fts_dumpreg_store
 * Brief:  no
@@ -1219,9 +997,7 @@ static ssize_t fts_dumpreg_show(struct device *dev, struct device_attribute *att
     struct i2c_client *client;
 
     mutex_lock(&fts_input_dev->mutex);
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_proc_busy(1);
-#endif
+
     client = container_of(dev, struct i2c_client, dev);
     fts_i2c_read_reg(client, FTS_REG_POWER_MODE, &regvalue);
     count += sprintf(tmp + count, "Power Mode:0x%02x\n", regvalue);
@@ -1246,9 +1022,7 @@ static ssize_t fts_dumpreg_show(struct device *dev, struct device_attribute *att
 
     fts_i2c_read_reg(client, FTS_REG_FLOW_WORK_CNT, &regvalue);
     count += sprintf(tmp + count, "ESD count:0x%02x\n", regvalue);
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_proc_busy(0);
-#endif
+
     memcpy(buf, tmp, count);
     mutex_unlock(&fts_input_dev->mutex);
     return count;
@@ -1278,14 +1052,9 @@ static DEVICE_ATTR(fts_rw_reg, S_IRUGO|S_IWUSR, fts_tprwreg_show, fts_tprwreg_st
 static DEVICE_ATTR(fts_upgrade_app, S_IRUGO|S_IWUSR, fts_fwupgradeapp_show, fts_fwupgradeapp_store);
 static DEVICE_ATTR(fts_driver_version, S_IRUGO|S_IWUSR, fts_driverversion_show, fts_driverversion_store);
 static DEVICE_ATTR(fts_dump_reg, S_IRUGO|S_IWUSR, fts_dumpreg_show, fts_dumpreg_store);
-static DEVICE_ATTR(fts_show_log, S_IRUGO|S_IWUSR, fts_show_log_show, fts_show_log_store);
 static DEVICE_ATTR(fts_module_config, S_IRUGO|S_IWUSR, fts_module_config_show, fts_module_config_store);
 static DEVICE_ATTR(fts_hw_reset, S_IRUGO|S_IWUSR, fts_hw_reset_show, fts_hw_reset_store);
 static DEVICE_ATTR(fts_irq, S_IRUGO|S_IWUSR, fts_irq_show, fts_irq_store);
-
-#if FTS_ESDCHECK_EN
-static DEVICE_ATTR(fts_esd_check, S_IRUGO|S_IWUSR, fts_esdcheck_show, fts_esdcheck_store);
-#endif
 
 /* add your attr in here*/
 static struct attribute *fts_attributes[] =
@@ -1296,13 +1065,9 @@ static struct attribute *fts_attributes[] =
     &dev_attr_fts_dump_reg.attr,
     &dev_attr_fts_upgrade_app.attr,
     &dev_attr_fts_driver_version.attr,
-    &dev_attr_fts_show_log.attr,
     &dev_attr_fts_module_config.attr,
     &dev_attr_fts_hw_reset.attr,
     &dev_attr_fts_irq.attr,
-#if FTS_ESDCHECK_EN
-    &dev_attr_fts_esd_check.attr,
-#endif
     NULL
 };
 

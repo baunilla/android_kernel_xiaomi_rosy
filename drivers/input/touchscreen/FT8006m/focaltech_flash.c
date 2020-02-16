@@ -497,7 +497,6 @@ bool fts_check_fw_valid(struct i2c_client *client)
     return false;
 }
 
-#if (!(FTS_UPGRADE_STRESS_TEST))
 /************************************************************************
 * Name: fts_ctpm_check_fw_status
 * Brief: Check App is valid or not
@@ -710,7 +709,6 @@ int ft8006m_ctpm_auto_upgrade(struct i2c_client *client)
 
     return i_ret;
 }
-#endif
 
 #if FTS_AUTO_UPGRADE_FOR_LCD_CFG_EN
 int fts_get_host_lic_ver(u8 *ver)
@@ -804,11 +802,6 @@ static void fts_ctpm_update_work_func(struct work_struct *work)
     FTS_DEBUG("[UPGRADE]******************************FTS enter upgrade******************************");
     ft8006m_irq_disable();
 
-    /* esd check */
-#if FTS_ESDCHECK_EN
-    ft8006m_esdcheck_switch(DISABLE);
-#endif
-
     i_ret = ft8006m_ctpm_auto_upgrade(ft8006m_i2c_client);
     if (i_ret < 0)
         FTS_ERROR("[UPGRADE]**********TP FW upgrade failed**********");
@@ -821,9 +814,6 @@ static void fts_ctpm_update_work_func(struct work_struct *work)
 	}
 #endif
 
-#if FTS_ESDCHECK_EN
-    ft8006m_esdcheck_switch(ENABLE);
-#endif
     ft8006m_irq_enable();
 
     FTS_DEBUG("[UPGRADE]******************************FTS exit upgrade******************************");

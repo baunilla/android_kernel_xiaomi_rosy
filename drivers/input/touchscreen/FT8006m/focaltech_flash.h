@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (C) 2010-2017, Focaltech Systems (R)£¬All Rights Reserved.
+* Copyright (C) 2010-2017, Focaltech Systems (R)Â£Â¬All Rights Reserved.
 * Copyright (C) 2019 XiaoMi, Inc.
 *
 * File Name: focaltech_flash.h
@@ -60,11 +60,11 @@ enum FILE_SIZE_TYPE
 };
 
 /* pramboot for 8716 */
-#define FTS_PRAMBOOT_8716   "include/pramboot/FT8716_Pramboot_V0.5_20160723.i"
+#define FTS_PRAMBOOT_8716   "include/pramboot/FT8006M_Pramboot_V1.6_20180426_le.i"
 #define FTS_UPGRADE_PRAMBOOT    FTS_PRAMBOOT_8716
 
 
-#define FTS_PRAMBOOT_E716   "include/pramboot/FT8716_Pramboot_V0.5_20160723.i"
+#define FTS_PRAMBOOT_E716   "include/pramboot/FT8006M_Pramboot_V1.6_20180426_le.i"
 #define FTS_UPGRADE_PRAMBOOT    FTS_PRAMBOOT_8716
 
 

@@ -133,31 +133,6 @@ int fts_create_sysfs(struct i2c_client *client);
 int fts_remove_sysfs(struct i2c_client *client);
 #endif
 
-/* ESD */
-#if FTS_ESDCHECK_EN
-int fts_esdcheck_init(void);
-int fts_esdcheck_exit(void);
-int fts_esdcheck_switch(bool enable);
-int fts_esdcheck_proc_busy(bool proc_debug);
-int fts_esdcheck_set_intr(bool intr);
-int fts_esdcheck_suspend(void);
-int fts_esdcheck_resume(void);
-int fts_esdcheck_get_status(void);
-#endif
-
-/* Production test */
-#if FTS_TEST_EN
-int fts_test_init(struct i2c_client *client);
-int fts_test_exit(struct i2c_client *client);
-#endif
-
-#if FTS_LOCK_DOWN_INFO
-int fts_lockdown_init(struct i2c_client *client);
-#endif
-
-#if FTS_CAT_RAWDATA
-int fts_rawdata_init(struct i2c_client *client);
-#endif
 /* Point Report Check*/
 #if FTS_POINT_REPORT_CHECK_EN
 int fts_point_report_check_init(void);
@@ -166,7 +141,6 @@ void fts_point_report_check_queue_work(void);
 #endif
 
 /* Other */
-extern int g_show_log;
 int fts_reset_proc(int hdelayms);
 int fts_wait_tp_to_valid(struct i2c_client *client);
 void fts_tp_state_recovery(struct i2c_client *client);
@@ -180,33 +154,11 @@ void fts_irq_enable(void);
 /*****************************************************************************
 * DEBUG function define here
 *****************************************************************************/
-#if FTS_DEBUG_EN
-#define FTS_DEBUG_LEVEL     1
-
-#if (FTS_DEBUG_LEVEL == 2)
-#define FTS_DEBUG(fmt, args...) printk(KERN_ERR "[FTS][%s]"fmt"\n", __func__, ##args)
-#define FTS_FUNC_ENTER() printk(KERN_ERR "[FTS]%s: Enter\n", __func__)
-#define FTS_FUNC_EXIT()  printk(KERN_ERR "[FTS]%s: Exit(%d)\n", __func__, __LINE__)
-#else
-#define FTS_DEBUG(fmt, args...) printk(KERN_ERR "[FTS]"fmt"\n", ##args)
-#define FTS_FUNC_ENTER()
-#define FTS_FUNC_EXIT()
-#endif
-
-#else
 #define FTS_DEBUG(fmt, args...)
+#define FTS_ERROR(fmt, args...)
+#define FTS_INFO(fmt, args...)
 #define FTS_FUNC_ENTER()
 #define FTS_FUNC_EXIT()
-#endif
-
-#define FTS_INFO(fmt, args...) do { \
-            if (g_show_log) {printk(KERN_ERR "[FTS][Info]"fmt"\n", ##args); } \
-        }  while (0)
-
-#define FTS_ERROR(fmt, args...)  do { \
-             if (g_show_log) {printk(KERN_ERR "[FTS][Error]"fmt"\n", ##args); } \
-        }  while (0)
-
 
 #if FTS_GESTURE_EN
 #define GESTURE_NODE "onoff"

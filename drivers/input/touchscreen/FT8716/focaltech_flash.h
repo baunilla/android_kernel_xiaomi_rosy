@@ -62,11 +62,11 @@ enum FILE_SIZE_TYPE
 };
 
 /* pramboot for 8716 */
-#define FTS_PRAMBOOT_8716   "include/pramboot/FT8716_Pramboot_V0.5_20160723.i"
+#define FTS_PRAMBOOT_8716   "include/pramboot/FT8716_Pramboot_V1.0_20180427.i"
 #define FTS_UPGRADE_PRAMBOOT    FTS_PRAMBOOT_8716
 
 
-#define FTS_PRAMBOOT_E716   "include/pramboot/FT8716_Pramboot_V0.5_20160723.i"
+#define FTS_PRAMBOOT_E716   "include/pramboot/FT8716_Pramboot_V1.0_20180427.i"
 #define FTS_UPGRADE_PRAMBOOT    FTS_PRAMBOOT_8716
 
 

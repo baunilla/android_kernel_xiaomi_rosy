@@ -77,16 +77,6 @@ struct fts_ts_data *fts_wq_data;
 struct input_dev *fts_input_dev;
 extern char Lcm_name[HARDWARE_MAX_ITEM_LONGTH];
 
-#if FTS_DEBUG_EN
-int g_show_log = 1;
-#else
-int g_show_log = 0;
-#endif
-
-#if (FTS_DEBUG_EN && (FTS_DEBUG_LEVEL == 2))
-char g_sz_debug[1024] = {0};
-#endif
-
 /*****************************************************************************
 * Static function prototypes
 *****************************************************************************/
@@ -97,8 +87,6 @@ static int fts_ts_resume(struct device *dev);
 #define PINCTRL_STATE_ACTIVE	"pmx_ts_active"
 #define PINCTRL_STATE_SUSPEND	"pmx_ts_suspend"
 #define PINCTRL_STATE_RELEASE	"pmx_ts_release"
-
-extern int panel_dead2tp;
 
 /*****************************************************************************
 *  Name: fts_wait_tp_to_valid
@@ -322,14 +310,6 @@ static int fts_power_source_init(struct fts_ts_data *data)
     int rc;
 
     FTS_FUNC_ENTER();
-   /* incell
-    data->vdd = regulator_get(&data->client->dev, "vdd");
-    if (IS_ERR(data->vdd))
-    {
-        rc = PTR_ERR(data->vdd);
-        FTS_ERROR("Regulator get failed vdd rc=%d", rc);
-    }
-*/
 
     data->vcc_i2c = regulator_get(&data->client->dev, "vcc_i2c");
     if (IS_ERR(data->vcc_i2c))
@@ -351,14 +331,14 @@ static int fts_power_source_init(struct fts_ts_data *data)
 	    rc = PTR_ERR(data->ibb);
 	  FTS_ERROR("Regulator get failed ibb rc=%d", rc);
 	}
-/* bug 293355 - change the LDO6 control by GPIO in the regulator solusion， heming, 20170912, begin*/
+	/* bug 293355 - change the LDO6 control by GPIO in the regulator solusion， heming, 20170912, begin*/
 	data->panel_iovdd = regulator_get(&data->client->dev, "panel_iovdd");
 	if (IS_ERR(data->panel_iovdd))
 	{
 
 	  FTS_ERROR("!!! panel_iovdd not present !!!");
 	}
-/* bug 293355 - change the LDO6 control by GPIO in the regulator solusion， heming, 20170912, end*/
+	/* bug 293355 - change the LDO6 control by GPIO in the regulator solusion， heming, 20170912, end*/
 
     FTS_FUNC_EXIT();
     return 0;
@@ -381,13 +361,6 @@ static int fts_power_source_ctrl(struct fts_ts_data *data, int enable)
     FTS_FUNC_ENTER();
     if (enable)
     {
-    /*incell
-        rc = regulator_enable(data->vdd);
-        if (rc)
-        {
-            FTS_ERROR("Regulator vdd enable failed rc=%d", rc);
-        }
-    */
         rc = regulator_enable(data->vcc_i2c);
         if (rc)
         {
@@ -396,13 +369,6 @@ static int fts_power_source_ctrl(struct fts_ts_data *data, int enable)
     }
     else
     {
-    /*incell
-        rc = regulator_disable(data->vdd);
-        if (rc)
-        {
-            FTS_ERROR("Regulator vdd disable failed rc=%d", rc);
-        }
-    */
         rc = regulator_disable(data->vcc_i2c);
         if (rc)
         {
@@ -419,14 +385,12 @@ static int lcd_power_ctrl(struct fts_ts_data *data, int enable)
 	FTS_FUNC_ENTER();
 	if (enable)
 	{
-	    /* bug 293355 - change the LDO6 control by GPIO in the regulator solusion， heming, 20170912, begin*/
 		rc = regulator_enable(data->panel_iovdd);
 		if (rc)
 		{
 		 FTS_ERROR("Regulator panel_iovdd enable failed rc=%d\n", rc);
 		}
 
-		/* bug 293355 - change the LDO6 control by GPIO in the regulator solusion， heming, 20170912, end*/
 		rc = regulator_enable(data->lab);
 		if (rc)
 		{
@@ -498,32 +462,6 @@ static void fts_release_all_finger(void)
     input_sync(fts_input_dev);
     mutex_unlock(&fts_wq_data->report_mutex);
 }
-
-
-#if (FTS_DEBUG_EN && (FTS_DEBUG_LEVEL == 2))
-static void fts_show_touch_buffer(u8 *buf, int point_num)
-{
-    int len = point_num * FTS_ONE_TCH_LEN;
-    int count = 0;
-    int i;
-
-    memset(g_sz_debug, 0, 1024);
-    if (len > (POINT_READ_BUF-3))
-    {
-        len = POINT_READ_BUF-3;
-    }
-    else if (len == 0)
-    {
-        len += FTS_ONE_TCH_LEN;
-    }
-    count += sprintf(g_sz_debug, "%02X,%02X,%02X", buf[0], buf[1], buf[2]);
-    for (i = 0; i < len; i++)
-    {
-        count += sprintf(g_sz_debug+count, ",%02X", buf[i+3]);
-    }
-
-}
-#endif
 
 static int fts_input_dev_report_key_event(struct ts_event *event, struct fts_ts_data *data)
 {
@@ -816,10 +754,6 @@ static int fts_read_touchdata(struct fts_ts_data *data)
     event->touch_point = 0;
 #endif
 
-#if (FTS_DEBUG_EN && (FTS_DEBUG_LEVEL == 2))
-    fts_show_touch_buffer(buf, event->point_num);
-#endif
-
     for (i = 0; i < data->pdata->max_touch_number; i++)
     {
         pointid = (buf[FTS_TOUCH_ID_POS + FTS_ONE_TCH_LEN * i]) >> 4;
@@ -911,10 +845,6 @@ static irqreturn_t fts_ts_interrupt(int irq, void *dev_id)
         return IRQ_HANDLED;
     }
 
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_set_intr(1);
-#endif
-
     ret = fts_read_touchdata(fts_wq_data);
 
     if (ret == 0)
@@ -923,10 +853,6 @@ static irqreturn_t fts_ts_interrupt(int irq, void *dev_id)
         fts_report_value(fts_wq_data);
         mutex_unlock(&fts_wq_data->report_mutex);
     }
-
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_set_intr(0);
-#endif
 
     return IRQ_HANDLED;
 }
@@ -1296,7 +1222,7 @@ static void hardwareinfo_set(void*drv_data)
 	return ;
 
 }
-#ifndef WT_COMPILE_FACTORY_VERSION
+
 static int get_boot_mode(struct i2c_client *client)
 {
 	int ret;
@@ -1322,7 +1248,7 @@ static int get_boot_mode(struct i2c_client *client)
 
 	return 0;
 }
-#endif
+
 /*****************************************************************************
 *  Name: fts_ts_probe
 *  Brief:
@@ -1505,26 +1431,11 @@ static int fts_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
     fts_gesture_init(input_dev, client);
 #endif
 
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_init();
-#endif
-
     fts_irq_enable();
     fts_i2c_read_reg(client, FTS_REG_VENDOR_ID, &data->fw_vendor_id);
     fts_i2c_read_reg(client, FTS_REG_FW_VER, data->fw_ver);
     FTS_INFO("vendor_id=0x%x\n", data->fw_vendor_id);
     FTS_INFO("tp_fw=0x%x\n", data->fw_ver[0]);
-#if FTS_TEST_EN
-    fts_test_init(client);
-#endif
-
-#if FTS_LOCK_DOWN_INFO
-    fts_lockdown_init(client);
-#endif
-
-#if FTS_CAT_RAWDATA
-    fts_rawdata_init(client);
-#endif
 
 #if FTS_AUTO_UPGRADE_EN
      err = get_boot_mode(client);
@@ -1630,14 +1541,6 @@ static int fts_ts_remove(struct i2c_client *client)
 
     input_unregister_device(data->input_dev);
 
-#if FTS_TEST_EN
-    fts_test_exit(client);
-#endif
-
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_exit();
-#endif
-
     FTS_FUNC_EXIT();
     return 0;
 }
@@ -1661,18 +1564,9 @@ int fts_ts_suspend(struct device *dev)
         FTS_FUNC_EXIT();
         return -EPERM;
     }
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_suspend();
-#endif
 
 #if FTS_GESTURE_EN
     if (gesture_data.gesture_all_switch){
-	if (panel_dead2tp){
-		FTS_ERROR("%s: panel_dead2tp=%d", __func__, panel_dead2tp);
-		lcd_power_ctrl(data, 0);
-		data->suspended = true;
-		return 0;
-	}
 	retval = fts_gesture_suspend(data->client);
 	if (retval == 0)
 	{
@@ -1743,21 +1637,11 @@ static int fts_ts_resume(struct device *dev)
     }
     fts_release_all_finger();
 
-	if ((!(gesture_data.gesture_all_switch)) || panel_dead2tp){
-		FTS_ERROR("%s:panel_dead2tp=%d", __func__, panel_dead2tp);
-		panel_dead2tp = 0;
-		lcd_power_ctrl(data, 1);
-	}
-
 #if (!FTS_CHIP_IDC)
     fts_reset_proc(200);
 #endif
 
     fts_tp_state_recovery(data->client);
-
-#if FTS_ESDCHECK_EN
-    fts_esdcheck_resume();
-#endif
 
 #if FTS_GESTURE_EN
     if (gesture_data.gesture_all_switch){

@@ -419,10 +419,6 @@ static int cal_lcdinitcode_ecc(u8 *buf, u16 *ecc_val)
                 for (i = 0; i < MAX_BANK_DATA; i++)
                 {
                     temp_byte.dshort = (u16)bank_data[i];
-                    if (i == 0)
-                        FTS_INFO("data0=%x, %d %d %d %d %d %d %d %d", temp_byte.dshort, temp_byte.bits.bit0,
-                            temp_byte.bits.bit1, temp_byte.bits.bit2, temp_byte.bits.bit3, temp_byte.bits.bit4,
-                            temp_byte.bits.bit5, temp_byte.bits.bit6, temp_byte.bits.bit7);
 
 			ecc.bits.bit0 = ecc_last.bits.bit8 ^ ecc_last.bits.bit9 ^ ecc_last.bits.bit10 ^ ecc_last.bits.bit11
 				^ ecc_last.bits.bit12 ^ ecc_last.bits.bit13 ^ ecc_last.bits.bit14 ^ ecc_last.bits.bit15

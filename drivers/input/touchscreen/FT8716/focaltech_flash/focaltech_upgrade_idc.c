@@ -308,7 +308,7 @@ int fts_ctpm_erase_flash(struct i2c_client *client)
 
     for (i = 0; i < 15; i++)
     {
-        /*get the erase app status, if get 0xF0AA£¬erase flash success*/
+        /*get the erase app status, if get 0xF0AAÂ£Â¬erase flash success*/
         auc_i2c_write_buf[0] = 0x6a;
         reg_val[0] = reg_val[1] = 0x00;
         fts_i2c_read(client, auc_i2c_write_buf, 1, reg_val, 2);
@@ -479,11 +479,7 @@ typedef enum
 
 #define AL2_FCS_COEF          ((1 << 15) + (1 << 10) + (1 << 3))
 
-#if ((FTS_CHIP_TYPE == _FT8006) || (FTS_CHIP_TYPE == _FT8736))
-#define FW_CFG_TOTAL_SIZE   0x80
-#else
 #define FW_CFG_TOTAL_SIZE   0x00
-#endif
 #define APP1_START          0x00
 #define APP1_LEN            0x100
 #define APP_VERIF_ADDR      (APP1_START + APP1_LEN)
@@ -576,14 +572,7 @@ bool ecc_check(u8 *pbt_buf, u32 star_addr, u32 len, u16 ecc_addr)
 bool fts_check_app_bin_valid_idc(u8 *pbt_buf)
 {
     u32 len;
-#if (FTS_CHIP_TYPE != _FT8006)
-    /* 1. First Byte */
-    if (pbt_buf[0] != 0x02)
-    {
-        FTS_DEBUG("[UPGRADE]APP.BIN Verify- the first byte(%x) error", pbt_buf[0]);
-        return false;
-    }
-#endif
+
     /* 2 PART1 ECC */
     if (!ecc_check(pbt_buf, APP1_START, APP1_LEN, APP1_ECC_ADDR))
     {
@@ -598,19 +587,9 @@ bool fts_check_app_bin_valid_idc(u8 *pbt_buf)
         return false;
     }
     len = data_word(pbt_buf, APP_VERIF_ADDR+APP_LEN);
-#if (FTS_CHIP_TYPE == _FT8006)
-    if ((data_word(pbt_buf, APP_VERIF_ADDR+APP_LEN_H) + data_word(pbt_buf, APP_VERIF_ADDR+APP_LEN_H_NE)) != 0xFFFF)
-    {
-        FTS_DEBUG("[UPGRADE]APP.BIN Verify- Length2 XOR error");
-        return false;
-    }
-    len +=  ((u32)data_word(pbt_buf, APP_VERIF_ADDR+APP_LEN_H) << 16);
-#endif
     FTS_DEBUG("%x %x %x %x", APP2_START, len, ((u32)data_word(pbt_buf, APP_VERIF_ADDR+APP_LEN_H) << 16), data_word(pbt_buf, APP_VERIF_ADDR+APP_LEN));
     len -= APP2_START;
 
     return ecc_check(pbt_buf, APP2_START, len, APP2_ECC_ADDR);
 }
-
-
 #endif /* IDC */

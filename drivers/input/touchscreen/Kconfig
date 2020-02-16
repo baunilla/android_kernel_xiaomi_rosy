@@ -1136,8 +1136,23 @@ config TOUCHSCREEN_MAXIM_STI
 	  module will be called maxim_sti.
 
 source "drivers/input/touchscreen/gt9xx/Kconfig"
-source "drivers/input/touchscreen/FT8716/Kconfig"
+
+menuconfig TOUCHSCREEN_ROSY
+	bool "Rosy touchscreen drivers"
+	select I2C
+	help
+	  Say Y here, and a list of supported touchscreen drivers will be
+	  displayed. This option affects the kernel.
+
+	  If unsure, say Y.
+
+if TOUCHSCREEN_ROSY
+
 source "drivers/input/touchscreen/FT8006m/Kconfig"
+
+source "drivers/input/touchscreen/FT8716/Kconfig"
+
+endif
 
 config TOUCHSCREEN_LOCKDOWN_INFO
         bool "lockdown info"

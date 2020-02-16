@@ -3,15 +3,9 @@
 #
 
 config TOUCHSCREEN_FT8006M
-        bool "Focaltech Touchscreen"
-		depends on I2C
-		default n
-		help
-		  Say Y here if you have Focaltech touch panel.
-		  If unsure, say N.
+	tristate "FT8006M touchscreen driver"
+	depends on TOUCHSCREEN_ROSY
+	help
+	  Say Y here to compile touchscreen drivers for FocalTech FT8006M.
 
-config TOUCHSCREEN_FTS_DIRECTORY
-    string "Focaltech ts directory name"
-    default "focaltech_touch"
-    depends on TOUCHSCREEN_FT8006M
-
+	  If unsure, say Y.
