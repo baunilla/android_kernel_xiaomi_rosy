@@ -64,6 +64,10 @@ static int power_supply_create_bat_triggers(struct power_supply *psy)
 
 	psy->charging_trig_name = kasprintf(GFP_KERNEL,
 					"%s-charging", psy->desc->name);
+
+	if (strstr(saved_command_line, "androidboot.mode=charger"))
+	     	psy->charging_trig_name = kasprintf(GFP_KERNEL,"%s-red", psy->desc->name);
+
 	if (!psy->charging_trig_name)
 		goto charging_failed;
 
