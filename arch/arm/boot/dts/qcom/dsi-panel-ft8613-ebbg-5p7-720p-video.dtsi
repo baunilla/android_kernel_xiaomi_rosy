@@ -207,7 +207,7 @@
 		qcom,mdss-dsi-init-delay-us = <5000>;
 		qcom,mdss-dsi-reset-sequence = <1 10>, <0 5>, <1 30>;
 
-		qcom,esd-check-enabled;
+		//qcom,esd-check-enabled;
 		qcom,mdss-dsi-panel-status-command = [06 01 00 01 05 00 02 AC 00
 			06 01 00 01 05 00 02 0A 9C];
 		qcom,mdss-dsi-panel-status-command-num = <2>;
