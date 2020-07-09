@@ -988,6 +988,12 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 			q6asm_cpu_buf_release(OUT, prtd->audio_client);
 			goto fail;
 		}
+
+		if (size == 0 || size < fbytes) {
+			memset(bufptr + offset + size, 0, fbytes - size);
+			size = xfer = fbytes;
+		}
+
 		if (copy_to_user(buf, bufptr+offset, xfer)) {
 			pr_err("Failed to copy buf to user\n");
 			ret = -EFAULT;
