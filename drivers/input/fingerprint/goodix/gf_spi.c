@@ -321,7 +321,7 @@ static irqreturn_t gf_irq(int irq, void *handle)
 	char msg = GF_NET_EVENT_IRQ;
 	struct gf_dev *gf_dev = &gf;
 
-	__pm_wakeup_event(&fp_wake_src, msecs_to_jiffies(WAKELOCK_HOLD_TIME));
+	__pm_wakeup_event(&fp_wake_src, WAKELOCK_HOLD_TIME);
 	sendnlmsg(&msg);
 	if ((gf_dev->wait_finger_down == true) && (gf_dev->device_available == 1) && (gf_dev->fb_black == 1)) {
 		gf_dev->wait_finger_down = false;
