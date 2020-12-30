@@ -141,7 +141,6 @@ static int fts_ctpm_get_vendor_id_flash(struct i2c_client *client, u8 *vendor_id
     {
         return -EIO;
     }
-    FTS_DEBUG("Vendor ID from Flash:%x", *vendor_id);
     return 0;
 }
 #endif
@@ -174,9 +173,6 @@ static int ft8006m_ctpm_get_i_file(struct i2c_client *client, int fw_valid)
         FTS_ERROR("Get upgrade file fail because of Vendor ID wrong");
         return ret;
     }
-    FTS_INFO("[UPGRADE] vendor id in tp=%x", vendor_id);
-    FTS_INFO("[UPGRADE] vendor id in driver:%x, FTS_VENDOR_ID:%02x %02x %02x",
-             vendor_id, FTS_VENDOR_1_ID, FTS_VENDOR_2_ID, FTS_VENDOR_3_ID);
 
     ret = 0;
     switch (vendor_id)
@@ -185,21 +181,18 @@ static int ft8006m_ctpm_get_i_file(struct i2c_client *client, int fw_valid)
     case FTS_VENDOR_1_ID:
         ft8006m_g_fw_file = FT8006M_CTPM_FW;
         ft8006m_g_fw_len = ft8006m_getsize(FW_SIZE);
-        FTS_DEBUG("[UPGRADE]FW FILE:FT8006M_CTPM_FW, SIZE:%x", ft8006m_g_fw_len);
         break;
 #endif
 #if (FTS_GET_VENDOR_ID_NUM >= 2)
     case FTS_VENDOR_2_ID:
         ft8006m_g_fw_file = FT8006M_FT8006M_CTPM_FW2;
         ft8006m_g_fw_len = ft8006m_getsize(FW2_SIZE);
-        FTS_DEBUG("[UPGRADE]FW FILE:FT8006M_FT8006M_CTPM_FW2, SIZE:%x", ft8006m_g_fw_len);
         break;
 #endif
 #if (FTS_GET_VENDOR_ID_NUM >= 3)
     case FTS_VENDOR_3_ID:
         ft8006m_g_fw_file = FT8006M_FT8006M_CTPM_FW3;
         ft8006m_g_fw_len = ft8006m_getsize(FW3_SIZE);
-        FTS_DEBUG("[UPGRADE]FW FILE:FT8006M_FT8006M_CTPM_FW3, SIZE:%x", ft8006m_g_fw_len);
         break;
 #endif
     default:
@@ -211,15 +204,12 @@ static int ft8006m_ctpm_get_i_file(struct i2c_client *client, int fw_valid)
     /* (FTS_GET_VENDOR_ID_NUM == 0) */
 	if (!strncmp(data->lockdown_info, TP_WHITE_LOCKDOWN, 16))
 	{
-		FTS_DEBUG(" TP color is WHITE\n");
 		ret = 1;
 	}else if (!strncmp(data->lockdown_info, TP_BLACK_LOCKDOWN, 16)){
-		FTS_DEBUG("TP color is BLACK\n");
 		ret = 2;
 	}else{
 		ret = Ft8006m_Read_Lockdown_From_Boot(client);
 	}
-	FTS_DEBUG("ret = %d\n", ret);
 
 	if (ret == 1){
 	    ft8006m_g_fw_file = FT8006M_CTPM_FW_WHITE;
@@ -227,10 +217,8 @@ static int ft8006m_ctpm_get_i_file(struct i2c_client *client, int fw_valid)
 	    ft8006m_g_fw_file = FT8006M_CTPM_FW_BLACK;
 	}else{
 	   ft8006m_g_fw_file = NULL;
-	    FTS_DEBUG("[UPGRADE] request tp FW fail!!!\n");
 	}
 	ft8006m_g_fw_len = ft8006m_getsize(FW_SIZE);
-	FTS_DEBUG("[UPGRADE]FW FILE:FT8006M_CTPM_FW, SIZE:%x", ft8006m_g_fw_len);
 #endif
 
     return ret?0:1;
@@ -310,7 +298,6 @@ static int fts_get_host_lic_ver(void)
         return -EINVAL;
     }
     hlic_len = (u32)(((u32)hlic_buf[2]) << 8) + hlic_buf[3];
-    FTS_DEBUG("host lcd init code len:%x", hlic_len);
     if (hlic_len >= upgfile_len)
     {
         FTS_ERROR("host lcd init code len is too large");
@@ -320,7 +307,6 @@ static int fts_get_host_lic_ver(void)
     hlic_ver[0] = hlic_buf[hlic_len];
     hlic_ver[1] = hlic_buf[hlic_len + 1];
 
-    FTS_DEBUG("host lcd init code ver:%x %x", hlic_ver[0], hlic_ver[1]);
     if (0xFF != (hlic_ver[0] + hlic_ver[1]))
     {
         FTS_ERROR("host lcd init code version check fail");
@@ -385,21 +371,18 @@ static int cal_lcdinitcode_ecc(u8 *buf, u16 *ecc_val)
     file_len = (u16)(((u16)buf[2] << 8) + buf[3]);
     bank_crc_en = (u32)(((u32)buf[9] << 24) + ((u32)buf[8] << 16) +\
         ((u32)buf[7] << 8) + (u32)buf[6]);
-    FTS_INFO("lcd init code len=%x bank en=%x", file_len, bank_crc_en);
 
     pos = 0x0A;
     while(pos < file_len)
     {
         bank_addr = (u16)(((u16)buf[pos + 0] << 8) + buf[pos + 1]);
         bank_len = (u16)(((u16)buf[pos + 2] << 8) + buf[pos + 3]);
-        FTS_INFO("bank pos=%x bank_addr=%x bank_len=%x", pos, bank_addr, bank_len);
         if (bank_len > MAX_BANK_DATA)
             return -EINVAL;
         memset(bank_data, 0, MAX_BANK_DATA);
         memcpy(bank_data, buf + pos + 4, bank_len);
 
         bank_num = (bank_addr - 0x8000)/MAX_BANK_DATA;
-        FTS_INFO("actual mipi bank number = %x", bank_num);
         for (i = 0; i < sizeof(bank_mapping)/sizeof(u8); i++)
         {
             if (bank_num == bank_mapping[i])
@@ -410,10 +393,8 @@ static int cal_lcdinitcode_ecc(u8 *buf, u16 *ecc_val)
         }
         if (i >= sizeof(bank_mapping)/sizeof(u8))
         {
-            FTS_INFO("actual mipi bank(%d) not find in bank mapping, need jump", bank_num);
         }
         else{
-            FTS_INFO("8006 bank number = %d", banknum_8006);
             if ((bank_crc_en >> banknum_8006) & 0x01)
             {
                 for (i = 0; i < MAX_BANK_DATA; i++)
@@ -469,7 +450,6 @@ static int cal_lcdinitcode_ecc(u8 *buf, u16 *ecc_val)
     }
 
     *ecc_val = ecc.dshort;
-    FTS_INFO("");
     return 0;
 }
 
@@ -517,8 +497,6 @@ static int print_data(u8 *buf, u32 len)
         n += sprintf(p + n, "%02x ", buf[i]);
     }
 
-    FTS_DEBUG("%s", p);
-
     kfree(p);
     return 0;
 }
@@ -559,13 +537,11 @@ static int read_3gamma(struct i2c_client *client, u8 **gamma, u16 *len)
 
     if ((gamma_len + gamma_len_n) != 0xFFFF)
     {
-        FTS_INFO("gamma length check fail:%x %x", gamma_len, gamma_len);
         return -EIO;
     }
 
     if ((gamma_header[4] + gamma_header[5]) != 0xFF)
     {
-        FTS_INFO("gamma ecc check fail:%x %x", gamma_header[4], gamma_header[5]);
         return -EIO;
     }
 
@@ -587,7 +563,6 @@ static int read_3gamma(struct i2c_client *client, u8 **gamma, u16 *len)
     packet_len = 256;
     remainder = gamma_len%256;
     if (remainder) packet_num++;
-    FTS_INFO("3-gamma len:%d", gamma_len);
     cmd[0] = 0x03;
     addr += 0x20;
     for (i = 0; i < packet_num; i++)
@@ -614,7 +589,6 @@ static int read_3gamma(struct i2c_client *client, u8 **gamma, u16 *len)
    {
 	gamma_ecc ^= pgamma[j];
     }
-    FTS_INFO("back_3gamma_ecc: 0x%x, 0x%x", gamma_ecc, gamma_header[0x04]);
     if (gamma_ecc != gamma_header[0x04])
     {
 	FTS_ERROR("back gamma ecc check fail:%x %x", gamma_ecc, gamma_header[0x04]);
@@ -632,7 +606,6 @@ static int read_3gamma(struct i2c_client *client, u8 **gamma, u16 *len)
 
     if (false == gamma_has_enable)
     {
-        FTS_INFO("3-gamma has no gamma enable info");
         pgamma[gamma_len++] = gamma_enable[1];
         pgamma[gamma_len++] = gamma_enable[2];
         pgamma[gamma_len++] = gamma_enable[3];
@@ -642,7 +615,6 @@ static int read_3gamma(struct i2c_client *client, u8 **gamma, u16 *len)
 
     *len = gamma_len;
 
-    FTS_DEBUG("read 3-gamma data:");
     print_data(*gamma, gamma_len);
 
     return 0;
@@ -695,14 +667,11 @@ static int replace_3gamma(u8 *initcode, u8 *gamma, u16 gamma_len)
     else
         goto find_gamma_bank_err;
 
-    FTS_DEBUG("replace 3-gamma data:");
     print_data(initcode, 1100);
 
     return 0;
 
 find_gamma_bank_err:
-    FTS_INFO("3-gamma bank(%02x %02x) not find",
-        gamma[gamma_pos], gamma[gamma_pos+1]);
     return -ENODATA;
 }
 
@@ -719,7 +688,6 @@ static int read_replace_3gamma(struct i2c_client *client, u8 *buf)
     ret = read_3gamma(client, &gamma, &gamma_len);
     if (ret < 0)
     {
-        FTS_INFO("no vaid 3-gamma data, not replace");
         kfree(gamma);
         return 0;
     }
@@ -739,14 +707,12 @@ static int read_replace_3gamma(struct i2c_client *client, u8 *buf)
         kfree(gamma);
         return ret;
     }
-    FTS_INFO("lcd init code cal ecc:%04x", initcode_ecc);
     buf[4] = (u8)(initcode_ecc >> 8);
     buf[5] = (u8)(initcode_ecc);
     buf[0x43d] = (u8)(initcode_ecc >> 8);
     buf[0x43c] = (u8)(initcode_ecc);
 
     initcode_checksum = cal_lcdinitcode_checksum(buf + 2, 0x43e - 2);
-    FTS_INFO("lcd init code calc checksum:%04x", initcode_checksum);
     buf[0] = (u8)(initcode_checksum >> 8);
     buf[1] = (u8)(initcode_checksum);
 
@@ -764,7 +730,6 @@ int check_initial_code_valid(struct i2c_client *client, u8 *buf)
     u16 initcode_checksum = 0;
 
     initcode_checksum = cal_lcdinitcode_checksum(buf + 2, 0x43e - 2);
-    FTS_INFO("lcd init code calc checksum:%04x", initcode_checksum);
     if (initcode_checksum != ((u16)((u16)buf[0] << 8) + buf[1]))
     {
         FTS_ERROR("Initial Code checksum fail");
@@ -777,7 +742,6 @@ int check_initial_code_valid(struct i2c_client *client, u8 *buf)
         FTS_ERROR("lcd init code ecc calculate fail");
         return ret;
     }
-    FTS_INFO("lcd init code cal ecc:%04x", initcode_ecc);
     if (initcode_ecc != ((u16)((u16)buf[4] << 8) + buf[5]))
     {
         FTS_ERROR("Initial Code ecc check fail");
@@ -841,10 +805,6 @@ static int Ft8006m_Read_Lockdown_From_Boot(struct i2c_client *client)
                    }
 	        }
 
-	FTS_DEBUG("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c", \
-			buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8],
-			buf[9], buf[10], buf[11], buf[12], buf[13], buf[14], buf[15]);
-    FTS_DEBUG("[UPGRADE]: reset the new FW!!");
     auc_i2c_write_buf[0] = FTS_REG_RESET_FW;
     ft8006m_i2c_write(client, auc_i2c_write_buf, 1);
     msleep(1000);
@@ -852,10 +812,8 @@ static int Ft8006m_Read_Lockdown_From_Boot(struct i2c_client *client)
     ft8006m_ctpm_i2c_hid2std(client);
 if (!strncmp(buf, TP_WHITE_LOCKDOWN, 16))
 {
-	FTS_DEBUG(" BOOT status:TP color is WHITE\n");
 	ret = 1;
 }else if (!strncmp(buf, TP_BLACK_LOCKDOWN, 16)){
-	FTS_DEBUG("BOOT status:TP color is BLACK\n");
 	ret = 2;
 }
 
@@ -930,7 +888,6 @@ static int ft8006m_ctpm_fw_upgrade_use_buf(struct i2c_client *client, u8 *pbt_bu
 
     /*write FW to ctpm flash*/
     upgrade_ecc = 0;
-    FTS_DEBUG("[UPGRADE]: write FW to ctpm flash!!");
     temp = 0;
     packet_number = (dw_lenth) / FTS_PACKET_LENGTH;
     packet_buf[0] = FTS_FW_WRITE_CMD;
@@ -966,7 +923,6 @@ static int ft8006m_ctpm_fw_upgrade_use_buf(struct i2c_client *client, u8 *pbt_bu
             if (i > 15)
             {
                 msleep(1);
-                FTS_DEBUG("[UPGRADE]: write flash: host : %x status : %x!!", (j + 0x1000 + (0x5000/FTS_PACKET_LENGTH)), (((reg_val[0]) << 8) | reg_val[1]));
             }
 
             ft8006m_ctpm_upgrade_delay(10000);
@@ -1004,7 +960,6 @@ static int ft8006m_ctpm_fw_upgrade_use_buf(struct i2c_client *client, u8 *pbt_bu
             if (i > 15)
             {
                 msleep(1);
-                FTS_DEBUG("[UPGRADE]: write flash: host : %x status : %x!!", (j + 0x1000 + (0x5000/FTS_PACKET_LENGTH)), (((reg_val[0]) << 8) | reg_val[1]));
             }
 
             ft8006m_ctpm_upgrade_delay(10000);
@@ -1015,7 +970,6 @@ static int ft8006m_ctpm_fw_upgrade_use_buf(struct i2c_client *client, u8 *pbt_bu
 
     /*********Step 6: read out checksum***********************/
     /*send the opration head */
-    FTS_DEBUG("[UPGRADE]: read out checksum!!");
     auc_i2c_write_buf[0] = 0x64;
     ft8006m_i2c_write(client, auc_i2c_write_buf, 1);
     msleep(300);
@@ -1050,7 +1004,6 @@ static int ft8006m_ctpm_fw_upgrade_use_buf(struct i2c_client *client, u8 *pbt_bu
 
         if (0xF0 == reg_val[0] && 0x55 == reg_val[1])
         {
-            FTS_DEBUG("[UPGRADE]: reg_val[0]=%02x reg_val[0]=%02x!!", reg_val[0], reg_val[1]);
             break;
         }
         msleep(1);
@@ -1063,9 +1016,7 @@ static int ft8006m_ctpm_fw_upgrade_use_buf(struct i2c_client *client, u8 *pbt_bu
         FTS_ERROR("[UPGRADE]: ecc error! FW=%02x upgrade_ecc=%02x!!", reg_val[0], upgrade_ecc);
         return -EIO;
     }
-    FTS_DEBUG("[UPGRADE]: checksum %x %x!!", reg_val[0], upgrade_ecc);
 
-    FTS_DEBUG("[UPGRADE]: reset the new FW!!");
     auc_i2c_write_buf[0] = FTS_REG_RESET_FW;
     ft8006m_i2c_write(client, auc_i2c_write_buf, 1);
     msleep(1000);
@@ -1130,12 +1081,10 @@ static int ft8006m_ctpm_lcd_cfg_upgrade_use_buf(struct i2c_client  *client, u8 *
         if (reg_val[0] == ft8006m_chip_types.bootloader_idh
             && reg_val[1] == ft8006m_chip_types.bootloader_idl)
         {
-            FTS_DEBUG("[UPGRADE]: read bootload id ok!! ID1 = 0x%x, ID2 = 0x%x!!", reg_val[0], reg_val[1]);
             break;
         }
         else
         {
-            FTS_ERROR("[UPGRADE]: read bootload id fail!! ID1 = 0x%x, ID2 = 0x%x!!", reg_val[0], reg_val[1]);
             continue;
         }
     }
@@ -1164,7 +1113,6 @@ static int ft8006m_ctpm_lcd_cfg_upgrade_use_buf(struct i2c_client  *client, u8 *
     ft8006m_i2c_write(client, auc_i2c_write_buf, 2);
 
     /*Step 4:erase app and panel paramenter area*/
-    FTS_DEBUG("[UPGRADE]: erase app and panel paramenter area!!");
     auc_i2c_write_buf[0] = FTS_ERASE_APP_REG;
     ft8006m_i2c_write(client, auc_i2c_write_buf, 1);
     msleep(1000);
@@ -1180,7 +1128,6 @@ static int ft8006m_ctpm_lcd_cfg_upgrade_use_buf(struct i2c_client  *client, u8 *
         }
         msleep(50);
     }
-    FTS_DEBUG("[UPGRADE]: erase app area reg_val[0] = %x reg_val[1] = %x!!", reg_val[0], reg_val[1]);
 
     auc_i2c_write_buf[0] = 0xB0;
     auc_i2c_write_buf[1] = 0;
@@ -1190,7 +1137,6 @@ static int ft8006m_ctpm_lcd_cfg_upgrade_use_buf(struct i2c_client  *client, u8 *
 
     /*write FW to ctpm flash*/
     upgrade_ecc = 0;
-    FTS_DEBUG("[UPGRADE]: write FW to ctpm flash!!");
     temp = 0;
     packet_number = (dw_lenth) / FTS_PACKET_LENGTH;
     packet_buf[0] = FTS_FW_WRITE_CMD;
@@ -1225,7 +1171,6 @@ static int ft8006m_ctpm_lcd_cfg_upgrade_use_buf(struct i2c_client  *client, u8 *
             if (i > 15)
             {
                 msleep(1);
-                FTS_DEBUG("[UPGRADE]: write flash: host : %x status : %x!!", (j + 0x1000 + (0x5000/FTS_PACKET_LENGTH)), (((reg_val[0]) << 8) | reg_val[1]));
             }
 
             ft8006m_ctpm_upgrade_delay(10000);
@@ -1262,7 +1207,6 @@ static int ft8006m_ctpm_lcd_cfg_upgrade_use_buf(struct i2c_client  *client, u8 *
             if (i > 15)
             {
                 msleep(1);
-                FTS_DEBUG("[UPGRADE]: write flash: host : %x status : %x!!", (j + 0x1000 + (0x5000/FTS_PACKET_LENGTH)), (((reg_val[0]) << 8) | reg_val[1]));
             }
 
             ft8006m_ctpm_upgrade_delay(10000);
@@ -1273,7 +1217,6 @@ static int ft8006m_ctpm_lcd_cfg_upgrade_use_buf(struct i2c_client  *client, u8 *
 
     /*********Step 6: read out checksum***********************/
     /*send the opration head */
-    FTS_DEBUG("[UPGRADE]: read out checksum!!");
     auc_i2c_write_buf[0] = 0x64;
     ft8006m_i2c_write(client, auc_i2c_write_buf, 1);
     msleep(300);
@@ -1297,7 +1240,6 @@ static int ft8006m_ctpm_lcd_cfg_upgrade_use_buf(struct i2c_client  *client, u8 *
 
         if (0xF0 == reg_val[0] && 0x55 == reg_val[1])
         {
-            FTS_DEBUG("[UPGRADE]: reg_val[0]=%02x reg_val[0]=%02x!!", reg_val[0], reg_val[1]);
             break;
         }
         msleep(1);
@@ -1310,9 +1252,7 @@ static int ft8006m_ctpm_lcd_cfg_upgrade_use_buf(struct i2c_client  *client, u8 *
         FTS_ERROR("[UPGRADE]: ecc error! FW=%02x upgrade_ecc=%02x!!", reg_val[0], upgrade_ecc);
         return -EIO;
     }
-    FTS_DEBUG("[UPGRADE]: checksum %x %x!!", reg_val[0], upgrade_ecc);
 
-    FTS_DEBUG("[UPGRADE]: reset the new FW!!");
     auc_i2c_write_buf[0] = FTS_REG_RESET_FW;
     ft8006m_i2c_write(client, auc_i2c_write_buf, 1);
     msleep(1000);
@@ -1335,8 +1275,6 @@ static int ft8006m_ctpm_fw_upgrade_with_app_i_file(struct i2c_client *client)
     u32 fw_len;
     u8 *fw_buf;
 
-    FTS_INFO("[UPGRADE]**********start upgrade with app.i**********");
-
     fw_len = ft8006m_g_fw_len - APP_OFFSET;
     fw_buf = ft8006m_g_fw_file + APP_OFFSET;
     if (fw_len < APP_FILE_MIN_SIZE || fw_len > APP_FILE_MAX_SIZE)
@@ -1349,10 +1287,6 @@ static int ft8006m_ctpm_fw_upgrade_with_app_i_file(struct i2c_client *client)
     if (i_ret != 0)
     {
         FTS_ERROR("[UPGRADE] upgrade app.i failed");
-    }
-    else
-    {
-        FTS_INFO("[UPGRADE]: upgrade app.i succeed");
     }
 
     return i_ret;
@@ -1371,8 +1305,6 @@ static int ft8006m_ctpm_fw_upgrade_with_lcd_cfg_i_file(struct i2c_client *client
     u32 fw_len;
     u8 *fw_buf;
 
-    FTS_INFO("[UPGRADE]**********start upgrade with lcd init code**********");
-
     fw_len = ft8006m_g_fw_len;
     fw_buf = ft8006m_g_fw_file;
     if (fw_len < APP_FILE_MIN_SIZE || fw_len > APP_FILE_MAX_SIZE)
@@ -1386,10 +1318,6 @@ static int ft8006m_ctpm_fw_upgrade_with_lcd_cfg_i_file(struct i2c_client *client
     if (i_ret != 0)
     {
         FTS_ERROR("[UPGRADE] init code upgrade fail, ret=%d", i_ret);
-    }
-    else
-    {
-        FTS_INFO("[UPGRADE] init code upgrade succeed");
     }
 
     return i_ret;
@@ -1407,8 +1335,6 @@ static int ft8006m_ctpm_fw_upgrade_with_app_bin_file(struct i2c_client *client, 
     u8 *pbt_buf = NULL;
     int i_ret = 0;
     int fwsize = 0;
-
-    FTS_INFO("[UPGRADE]**********start upgrade with app.bin**********");
 
     fwsize = ft8006m_GetFirmwareSize(firmware_name);
     if (fwsize < APP_FILE_MIN_SIZE || fwsize > APP_FILE_MAX_SIZE)
@@ -1440,11 +1366,6 @@ static int ft8006m_ctpm_fw_upgrade_with_app_bin_file(struct i2c_client *client, 
             FTS_ERROR("[UPGRADE]: upgrade app.bin failed");
             goto ERROR_BIN;
         }
-        else
-        {
-            FTS_INFO("[UPGRADE]: upgrade app.bin succeed");
-        }
-
 
     kfree(pbt_buf);
     return i_ret;

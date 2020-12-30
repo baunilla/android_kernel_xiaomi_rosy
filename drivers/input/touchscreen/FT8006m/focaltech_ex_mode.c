@@ -88,7 +88,6 @@ static ssize_t fts_touch_glove_store(struct device *dev, struct device_attribute
     {
         if (!g_ft8006m_mode_flag.fts_glove_mode_flag)
         {
-            FTS_INFO("[Mode]enter glove mode");
             ret = ft8006m_enter_glove_mode(ft8006m_i2c_client, true);
             if (ret >= 0)
             {
@@ -100,7 +99,6 @@ static ssize_t fts_touch_glove_store(struct device *dev, struct device_attribute
     {
         if (g_ft8006m_mode_flag.fts_glove_mode_flag)
         {
-            FTS_INFO("[Mode]exit glove mode");
             ret = ft8006m_enter_glove_mode(ft8006m_i2c_client, false);
             if (ret >= 0)
             {
@@ -108,7 +106,6 @@ static ssize_t fts_touch_glove_store(struct device *dev, struct device_attribute
             }
         }
     }
-    FTS_INFO("[Mode]glove mode status:  %d", g_ft8006m_mode_flag.fts_glove_mode_flag);
     return count;
 }
 
@@ -164,7 +161,6 @@ static ssize_t fts_touch_cover_store(struct device *dev, struct device_attribute
     {
         if (!g_ft8006m_mode_flag.fts_cover_mode_flag)
         {
-            FTS_INFO("[Mode]enter cover mode");
             ret = ft8006m_enter_cover_mode(ft8006m_i2c_client, true);
             if (ret >= 0)
             {
@@ -176,7 +172,6 @@ static ssize_t fts_touch_cover_store(struct device *dev, struct device_attribute
     {
         if (g_ft8006m_mode_flag.fts_cover_mode_flag)
         {
-            FTS_INFO("[Mode]exit cover mode");
             ret = ft8006m_enter_cover_mode(ft8006m_i2c_client, false);
             if (ret >= 0)
             {
@@ -184,7 +179,6 @@ static ssize_t fts_touch_cover_store(struct device *dev, struct device_attribute
             }
         }
     }
-    FTS_INFO("[Mode]cover mode status:  %d", g_ft8006m_mode_flag.fts_cover_mode_flag);
     return count;
 }
 
@@ -240,7 +234,6 @@ static ssize_t fts_touch_charger_store(struct device *dev, struct device_attribu
     {
         if (!g_ft8006m_mode_flag.fts_charger_mode_flag)
         {
-            FTS_INFO("[Mode]enter charger mode");
             ret = ft8006m_enter_charger_mode(ft8006m_i2c_client, true);
             if (ret >= 0)
             {
@@ -252,7 +245,6 @@ static ssize_t fts_touch_charger_store(struct device *dev, struct device_attribu
     {
         if (g_ft8006m_mode_flag.fts_charger_mode_flag)
         {
-            FTS_INFO("[Mode]exit charger mode");
             ret = ft8006m_enter_charger_mode(ft8006m_i2c_client, false);
             if (ret >= 0)
             {
@@ -260,7 +252,6 @@ static ssize_t fts_touch_charger_store(struct device *dev, struct device_attribu
             }
         }
     }
-    FTS_INFO("[Mode]charger mode status: %d", g_ft8006m_mode_flag.fts_charger_mode_flag);
     return count;
 }
 
@@ -284,10 +275,6 @@ int  ft8006m_enter_charger_mode(struct i2c_client *client, int mode)
         buf_value[0] = 0x00;
 
     ret = ft8006m_i2c_write_reg(client, buf_addr[0], buf_value[0]);
-    if (ret < 0)
-    {
-        FTS_DEBUG("[Mode]ft8006m_enter_charger_mode write value fail");
-    }
 
     return ret ;
 
@@ -338,10 +325,6 @@ int ft8006m_ex_mode_init(struct i2c_client *client)
         FTS_ERROR("[Mode]create sysfs failed.");
         sysfs_remove_group(&client->dev.kobj, &fts_touch_mode_group);
         return -EIO;
-    }
-    else
-    {
-        FTS_DEBUG("[Mode]create sysfs succeeded");
     }
 
     return err;

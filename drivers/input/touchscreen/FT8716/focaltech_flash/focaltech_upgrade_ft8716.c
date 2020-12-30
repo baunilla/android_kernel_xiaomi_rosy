@@ -98,7 +98,6 @@ static int fts_ctpm_get_vendor_id_flash(struct i2c_client *client, u8 *vendor_id
 
     /*write pramboot*/
     fw_len = fts_getsize(PRAMBOOT_SIZE);
-    FTS_DEBUG("[UPGRADE]: pramboot size : %d!!", fw_len);
     i_ret = fts_ctpm_write_pram(client, aucFW_PRAM_BOOT, fw_len);
     if (i_ret != 0)
     {
@@ -126,7 +125,6 @@ static int fts_ctpm_get_vendor_id_flash(struct i2c_client *client, u8 *vendor_id
     {
         return -EIO;
     }
-    FTS_DEBUG("Vendor ID from Flash:%x", *vendor_id);
     return 0;
 }
 #endif
@@ -164,9 +162,6 @@ static int fts_ctpm_get_i_file(struct i2c_client *client, int fw_valid)
         FTS_ERROR("Get upgrade file fail because of Vendor ID wrong");
         return ret;
     }
-    FTS_INFO("[UPGRADE] vendor id in tp=%x", vendor_id);
-    FTS_INFO("[UPGRADE] vendor id in driver:%x, FTS_VENDOR_ID:%02x %02x %02x",
-             vendor_id, FTS_VENDOR_1_ID, FTS_VENDOR_2_ID, FTS_VENDOR_3_ID);
 
     ret = 0;
     switch (vendor_id)
@@ -175,21 +170,18 @@ static int fts_ctpm_get_i_file(struct i2c_client *client, int fw_valid)
     case FTS_VENDOR_1_ID:
         g_fw_file = CTPM_FW;
         g_fw_len = fts_getsize(FW_SIZE);
-        FTS_DEBUG("[UPGRADE]FW FILE:CTPM_FW, SIZE:%x", g_fw_len);
         break;
 #endif
 #if (FTS_GET_VENDOR_ID_NUM >= 2)
     case FTS_VENDOR_2_ID:
         g_fw_file = CTPM_FW2;
         g_fw_len = fts_getsize(FW2_SIZE);
-        FTS_DEBUG("[UPGRADE]FW FILE:CTPM_FW2, SIZE:%x", g_fw_len);
         break;
 #endif
 #if (FTS_GET_VENDOR_ID_NUM >= 3)
     case FTS_VENDOR_3_ID:
         g_fw_file = CTPM_FW3;
         g_fw_len = fts_getsize(FW3_SIZE);
-        FTS_DEBUG("[UPGRADE]FW FILE:CTPM_FW3, SIZE:%x", g_fw_len);
         break;
 #endif
     default:
@@ -207,7 +199,6 @@ static int fts_ctpm_get_i_file(struct i2c_client *client, int fw_valid)
 		g_fw_file = CTPM_FW1;
 		g_fw_len = fts_getsize(FW1_SIZE);
 	}
-    FTS_DEBUG("[UPGRADE]FW FILE:CTPM_FW, SIZE:%x", g_fw_len);
 #endif
 	if (!g_fw_len)
 		return -EIO;
@@ -415,7 +406,6 @@ static int fts_ctpm_fw_upgrade_use_buf(struct i2c_client *client, u8 *pbt_buf, u
 
     /*write pramboot*/
     fw_len = fts_getsize(PRAMBOOT_SIZE);
-    FTS_DEBUG("[UPGRADE]: pramboot size : %d!!", fw_len);
     i_ret = fts_ctpm_write_pram(client, aucFW_PRAM_BOOT, fw_len);
     if (i_ret != 0)
     {
@@ -444,8 +434,6 @@ static int fts_ctpm_fw_upgrade_with_app_i_file(struct i2c_client *client)
     u32 fw_len;
     u8 *fw_buf;
 
-    FTS_INFO("[UPGRADE]**********start upgrade with app.i**********");
-
     fw_len = g_fw_len;
     fw_buf = g_fw_file;
     if (fw_len < APP_FILE_MIN_SIZE || fw_len > APP_FILE_MAX_SIZE)
@@ -458,10 +446,6 @@ static int fts_ctpm_fw_upgrade_with_app_i_file(struct i2c_client *client)
     if (i_ret != 0)
     {
         FTS_ERROR("[UPGRADE] upgrade app.i failed");
-    }
-    else
-    {
-        FTS_INFO("[UPGRADE]: upgrade app.i succeed");
     }
 
     return i_ret;
@@ -480,8 +464,6 @@ static int fts_ctpm_fw_upgrade_with_app_bin_file(struct i2c_client *client, char
     int i_ret = 0;
     bool ecc_ok = false;
     int fwsize = 0;
-
-    FTS_INFO("[UPGRADE]**********start upgrade with app.bin**********");
 
     fwsize = fts_GetFirmwareSize(firmware_name);
     if (fwsize < APP_FILE_MIN_SIZE || fwsize > APP_FILE_MAX_SIZE)
@@ -508,16 +490,11 @@ static int fts_ctpm_fw_upgrade_with_app_bin_file(struct i2c_client *client, char
 
     if (ecc_ok)
     {
-        FTS_INFO("[UPGRADE] app.bin ecc ok");
         i_ret = fts_ctpm_fw_upgrade_use_buf(client, pbt_buf, fwsize);
         if (i_ret != 0)
         {
             FTS_ERROR("[UPGRADE]: upgrade app.bin failed");
             goto ERROR_BIN;
-        }
-        else
-        {
-            FTS_INFO("[UPGRADE]: upgrade app.bin succeed");
         }
     }
     else

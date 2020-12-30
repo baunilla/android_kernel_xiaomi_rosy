@@ -96,7 +96,6 @@ static ssize_t fts_debug_write(struct file *filp, const char __user *buff, size_
 
     if (copy_from_user(&writebuf, buff, buflen))
     {
-        FTS_DEBUG("[APK]: copy from user error!!");
         return -EFAULT;
     }
 
@@ -109,7 +108,6 @@ static ssize_t fts_debug_write(struct file *filp, const char __user *buff, size_
             memset(upgrade_file_path, 0, sizeof(upgrade_file_path));
             sprintf(upgrade_file_path, "%s", writebuf + 1);
             upgrade_file_path[buflen-1] = '\0';
-            FTS_DEBUG("%s\n", upgrade_file_path);
             ft8006m_irq_disable();
             if (ft8006m_updatefun_curr.upgrade_with_app_bin_file)
                 ret = ft8006m_updatefun_curr.upgrade_with_app_bin_file(ft8006m_i2c_client, upgrade_file_path);
@@ -122,7 +120,6 @@ static ssize_t fts_debug_write(struct file *filp, const char __user *buff, size_
         break;
 
         case PROC_SET_TEST_FLAG:
-            FTS_DEBUG("[APK]: PROC_SET_TEST_FLAG = %x!!", writebuf[1]);
             break;
         case PROC_READ_REGISTER:
             writelen = 1;
@@ -143,11 +140,9 @@ static ssize_t fts_debug_write(struct file *filp, const char __user *buff, size_
         case PROC_SET_SLAVE_ADDR:
 
             ret = ft8006m_i2c_client->addr;
-            FTS_DEBUG("Original i2c addr 0x%x ", ret<<1);
             if (writebuf[1] != ft8006m_i2c_client->addr)
             {
                 ft8006m_i2c_client->addr = writebuf[1];
-                FTS_DEBUG("Change i2c addr 0x%x to 0x%x", ret<<1, writebuf[1]<<1);
 
             }
             break;
@@ -158,14 +153,12 @@ static ssize_t fts_debug_write(struct file *filp, const char __user *buff, size_
             tmp[buflen - 1] = '\0';
             if (strncmp(tmp, "focal_driver", 12) == 0)
             {
-                FTS_DEBUG("Begin HW Reset");
                 ft8006m_reset_proc(1);
             }
 
             break;
 
         case PROC_AUTOCLB:
-            FTS_DEBUG("[APK]: autoclb!!");
             ft8006m_ctpm_auto_clb(ft8006m_i2c_client);
             break;
         case PROC_READ_DATA:
@@ -296,7 +289,6 @@ static int fts_debug_write(struct file *filp,
             memset(upgrade_file_path, 0, sizeof(upgrade_file_path));
             sprintf(upgrade_file_path, "%s", writebuf + 1);
             upgrade_file_path[buflen-1] = '\0';
-            FTS_DEBUG("%s\n", upgrade_file_path);
             ft8006m_irq_disable();
             if (ft8006m_updatefun_curr.upgrade_with_app_bin_file)
                 ret = ft8006m_updatefun_curr.upgrade_with_app_bin_file(ft8006m_i2c_client, upgrade_file_path);
@@ -308,7 +300,6 @@ static int fts_debug_write(struct file *filp,
         }
         break;
         case PROC_SET_TEST_FLAG:
-            FTS_DEBUG("[APK]: PROC_SET_TEST_FLAG = %x!!", writebuf[1]);
             break;
         case PROC_READ_REGISTER:
             writelen = 1;
@@ -329,12 +320,9 @@ static int fts_debug_write(struct file *filp,
         case PROC_SET_SLAVE_ADDR:
 
             ret = ft8006m_i2c_client->addr;
-            FTS_DEBUG("Original i2c addr 0x%x ", ret<<1);
             if (writebuf[1] != ft8006m_i2c_client->addr)
             {
                 ft8006m_i2c_client->addr = writebuf[1];
-                FTS_DEBUG("Change i2c addr 0x%x to 0x%x", ret<<1, writebuf[1]<<1);
-
             }
             break;
 
@@ -344,14 +332,12 @@ static int fts_debug_write(struct file *filp,
             tmp[buflen - 1] = '\0';
             if (strncmp(tmp, "focal_driver", 12) == 0)
             {
-                FTS_DEBUG("Begin HW Reset");
                 ft8006m_reset_proc(1);
             }
 
             break;
 
         case PROC_AUTOCLB:
-            FTS_DEBUG("[APK]: autoclb!!");
             ft8006m_ctpm_auto_clb(ft8006m_i2c_client);
             break;
         case PROC_READ_DATA:
@@ -448,24 +434,11 @@ static int fts_debug_read(char *page, char **start,
 ***********************************************************************/
 int ft8006m_create_apk_debug_channel(struct i2c_client *client)
 {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
     fts_proc_entry = proc_create(PROC_NAME, 0777, NULL, &fts_proc_fops);
-#else
-    fts_proc_entry = create_proc_entry(PROC_NAME, 0777, NULL);
-#endif
     if (NULL == fts_proc_entry)
     {
         FTS_ERROR("Couldn't create proc entry!");
         return -ENOMEM;
-    }
-    else
-    {
-        FTS_INFO("Create proc entry success!");
-
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0))
-        fts_proc_entry->write_proc = fts_debug_write;
-        fts_proc_entry->read_proc = fts_debug_read;
-#endif
     }
     return 0;
 }
@@ -512,12 +485,10 @@ static ssize_t fts_irq_store(struct device *dev, struct device_attribute *attr, 
 {
     if (FTS_SYSFS_ECHO_ON(buf))
     {
-        FTS_INFO("[EX-FUN]enable irq");
         ft8006m_irq_enable();
     }
     else if (FTS_SYSFS_ECHO_OFF(buf))
     {
-        FTS_INFO("[EX-FUN]disable irq");
         ft8006m_irq_disable();
     }
     return count;
@@ -628,8 +599,6 @@ static int fts_hex_to_str(char *hex, int iHexLen, char *ch, int *iChLen)
         return -EPERM;
     }
 
-    FTS_DEBUG("iHexLen: %d in function:%s!!\n\n", iHexLen, __func__);
-
     if (iHexLen %2 == 1)
     {
         return -ENOENT;
@@ -655,7 +624,6 @@ static int fts_hex_to_str(char *hex, int iHexLen, char *ch, int *iChLen)
     }
     ch[iCharLen] = '\0';
     *iChLen = iCharLen;
-    FTS_DEBUG("iCharLen: %d, iChLen: %d in function:%s!!\n\n", iCharLen, *iChLen, __func__);
     return 0;
 }
 
@@ -781,7 +749,6 @@ static ssize_t fts_tprwreg_store(struct device *dev, struct device_attribute *at
         }
         else
         {
-            FTS_INFO("the register(0x%02x) is 0x%02x", regaddr, regvalue);
             g_rwreg_result.value = regvalue;
             g_rwreg_result.result = 0;
         }
@@ -802,7 +769,6 @@ static ssize_t fts_tprwreg_store(struct device *dev, struct device_attribute *at
         }
         else
         {
-            FTS_INFO("Write 0x%02x into register(0x%02x) successful", regvalue, regaddr);
             g_rwreg_result.result = 0;
         }
     }
@@ -1095,10 +1061,6 @@ int ft8006m_create_sysfs(struct i2c_client *client)
         FTS_ERROR("[EX]: sysfs_create_group() failed!!");
         sysfs_remove_group(&client->dev.kobj, &fts_attribute_group);
         return -EIO;
-    }
-    else
-    {
-        FTS_INFO("[EX]: sysfs_create_group() succeeded!!");
     }
     return err;
 }

@@ -64,8 +64,6 @@ int ft8006m_ctpm_upgrade_idc_init(struct i2c_client *client)
     u8 reg_val_id[4] = {0};
     u8 auc_i2c_write_buf[10];
 
-    FTS_INFO("[UPGRADE]**********Upgrade setting Init**********");
-
     /*read flash ID*/
     auc_i2c_write_buf[0] = 0x05;
     reg_val_id[0] = 0x00;
@@ -99,8 +97,6 @@ int ft8006m_ctpm_upgrade_idc_init(struct i2c_client *client)
 void ft8006m_ctpm_start_pramboot(struct i2c_client *client)
 {
     u8 auc_i2c_write_buf[10];
-
-    FTS_INFO("[UPGRADE]**********start pramboot**********");
     auc_i2c_write_buf[0] = 0x08;
     ft8006m_i2c_write(client, auc_i2c_write_buf, 1);
     msleep(20);
@@ -118,7 +114,6 @@ int ft8006m_ctpm_start_fw_upgrade(struct i2c_client *client)
     int i_ret = 0;
 
     /*send the soft upgrade commond to FW, and start upgrade*/
-    FTS_INFO("[UPGRADE]**********send 0xAA and 0x55 to FW, start upgrade**********");
 
     i_ret = ft8006m_i2c_write_reg(client, FTS_RST_CMD_REG1, FTS_UPGRADE_AA);
     msleep(10);
@@ -143,7 +138,6 @@ bool ft8006m_ctpm_check_run_state(struct i2c_client *client, int rstate)
     for (i = 0; i < FTS_UPGRADE_LOOP; i++)
     {
         cstate = ft8006m_ctpm_get_pram_or_rom_id(client);
-        FTS_DEBUG("[UPGRADE]: run state = %d", cstate);
 
         if (cstate == rstate)
             return true;
@@ -168,7 +162,6 @@ int ft8006m_ctpm_pramboot_ecc(struct i2c_client *client)
     FTS_FUNC_ENTER();
 
     /*read out checksum, if pramboot checksum != host checksum, upgrade fail*/
-    FTS_INFO("[UPGRADE]******read out pramboot checksum******");
     auc_i2c_write_buf[0] = 0xcc;
     msleep(2);
     ft8006m_i2c_read(client, auc_i2c_write_buf, 1, reg_val, 1);
@@ -177,7 +170,6 @@ int ft8006m_ctpm_pramboot_ecc(struct i2c_client *client)
         FTS_ERROR("[UPGRADE]: checksum fail : pramboot_ecc = %X, host_ecc = %X!!", reg_val[0], ft8006m_upgrade_ecc);
         return -EIO;
     }
-    FTS_DEBUG("[UPGRADE]: checksum success : pramboot_ecc = %X, host_ecc = %X!!", reg_val[0], ft8006m_upgrade_ecc);
     msleep(100);
 
     FTS_FUNC_EXIT();
@@ -199,8 +191,6 @@ int ft8006m_ctpm_upgrade_ecc(struct i2c_client *client, u32 startaddr, u32 lengt
     u32 temp;
     u8 reg_val[4] = {0};
     int i_ret = 0;
-
-    FTS_INFO("[UPGRADE]**********read out checksum**********");
 
     /*check sum init*/
     auc_i2c_write_buf[0] = 0x64;
@@ -279,8 +269,6 @@ int ft8006m_ctpm_upgrade_ecc(struct i2c_client *client, u32 startaddr, u32 lengt
         return -EIO;
     }
 
-    FTS_DEBUG("[UPGRADE]: ecc success : FW=%02x ft8006m_upgrade_ecc=%02x!!", reg_val[0], ft8006m_upgrade_ecc);
-
     ft8006m_upgrade_ecc = 0;
 
     return i_ret;
@@ -299,8 +287,6 @@ int ft8006m_ctpm_erase_flash(struct i2c_client *client)
     u8 auc_i2c_write_buf[10];
     u8 reg_val[4] = {0};
 
-    FTS_INFO("[UPGRADE]**********erase app now**********");
-
     /*send to erase flash*/
     auc_i2c_write_buf[0] = 0x61;
     ft8006m_i2c_write(client, auc_i2c_write_buf, 1);
@@ -308,7 +294,7 @@ int ft8006m_ctpm_erase_flash(struct i2c_client *client)
 
     for (i = 0; i < 15; i++)
     {
-        /*get the erase app status, if get 0xF0AA£¬erase flash success*/
+        /*get the erase app status, if get 0xF0AA erase flash success*/
         auc_i2c_write_buf[0] = 0x6a;
         reg_val[0] = reg_val[1] = 0x00;
         ft8006m_i2c_read(client, auc_i2c_write_buf, 1, reg_val, 2);
@@ -325,7 +311,6 @@ int ft8006m_ctpm_erase_flash(struct i2c_client *client)
         FTS_ERROR("[UPGRADE]: erase app error.reset tp and reload FW!!");
         return -EIO;
     }
-    FTS_DEBUG("[UPGRADE]: erase app ok!!");
 
     return 0;
 }
@@ -346,7 +331,6 @@ int ft8006m_ctpm_write_pramboot_for_idc(struct i2c_client *client, u32 length, u
     u8 packet_buf[FTS_PACKET_LENGTH + 6];
 
     ft8006m_upgrade_ecc = 0;
-    FTS_INFO("[UPGRADE]**********write pramboot to pram**********");
 
     temp = 0;
     packet_number = (length) / FTS_PACKET_LENGTH;
@@ -401,8 +385,6 @@ int ft8006m_ctpm_write_app_for_idc(struct i2c_client *client, u32 length, u8 *re
     u8 packet_buf[FTS_PACKET_LENGTH + 6];
     u8 auc_i2c_write_buf[10];
     u8 reg_val[4] = {0};
-
-    FTS_INFO("[UPGRADE]**********write app to flash**********");
 
     ft8006m_upgrade_ecc = 0;
 
@@ -515,7 +497,6 @@ u16 ft8006m_crc_calc(u8 *pbt_buf, u32 addr, u16 length)
     u16 cFcs = 0;
     u16 i, j;
 
-    FTS_DEBUG("[UPGRADE][ECC] : %04x  data:%04x, len:%04x!!", (addr), data_word(pbt_buf, (addr)), length);
     for (i = 0; i < length; i++)
     {
         cFcs ^= data_word(pbt_buf, (addr+i*2));
@@ -557,10 +538,8 @@ bool ft8006m_ecc_check(u8 *pbt_buf, u32 star_addr, u32 len, u16 ecc_addr)
 
     cal_ecc = ft8006m_crc_calc(pbt_buf, star_addr, (len/2));
 
-    FTS_DEBUG("[UPGRADE][ECC] : ecc1 = %x, cal_ecc = %x", ecc1, cal_ecc);
     if (ecc1 != cal_ecc)
     {
-        FTS_DEBUG("[UPGRADE][ECC] : ecc error!!");
         return false;
     }
     return true;
@@ -580,33 +559,28 @@ bool ft8006m_check_app_bin_valid_idc(u8 *pbt_buf)
     /* 1. First Byte */
     if (pbt_buf[0] != 0x02)
     {
-        FTS_DEBUG("[UPGRADE]APP.BIN Verify- the first byte(%x) error", pbt_buf[0]);
         return false;
     }
 #endif
     /* 2 PART1 ECC */
     if (!ft8006m_ecc_check(pbt_buf, APP1_START, APP1_LEN, APP1_ECC_ADDR))
     {
-        FTS_DEBUG("[UPGRADE]APP.BIN Verify- ecc1 error");
         return false;
     }
 
     /* 3. PART2 ECC */
     if ((data_word(pbt_buf, APP_VERIF_ADDR+APP_LEN) + data_word(pbt_buf, APP_VERIF_ADDR+APP_LEN_NE)) != 0xFFFF)
     {
-        FTS_DEBUG("[UPGRADE]APP.BIN Verify- Length XOR error");
         return false;
     }
     len = data_word(pbt_buf, APP_VERIF_ADDR+APP_LEN);
 #if (FTS_CHIP_TYPE == _FT8006)
     if ((data_word(pbt_buf, APP_VERIF_ADDR+APP_LEN_H) + data_word(pbt_buf, APP_VERIF_ADDR+APP_LEN_H_NE)) != 0xFFFF)
     {
-        FTS_DEBUG("[UPGRADE]APP.BIN Verify- Length2 XOR error");
         return false;
     }
     len +=  ((u32)data_word(pbt_buf, APP_VERIF_ADDR+APP_LEN_H) << 16);
 #endif
-    FTS_DEBUG("%x %x %x %x", APP2_START, len, ((u32)data_word(pbt_buf, APP_VERIF_ADDR+APP_LEN_H) << 16), data_word(pbt_buf, APP_VERIF_ADDR+APP_LEN));
     len -= APP2_START;
 
     return ft8006m_ecc_check(pbt_buf, APP2_START, len, APP2_ECC_ADDR);

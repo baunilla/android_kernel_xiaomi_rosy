@@ -154,9 +154,7 @@ void fts_irq_enable(void);
 /*****************************************************************************
 * DEBUG function define here
 *****************************************************************************/
-#define FTS_DEBUG(fmt, args...)
 #define FTS_ERROR(fmt, args...)
-#define FTS_INFO(fmt, args...)
 #define FTS_FUNC_ENTER()
 #define FTS_FUNC_EXIT()
 

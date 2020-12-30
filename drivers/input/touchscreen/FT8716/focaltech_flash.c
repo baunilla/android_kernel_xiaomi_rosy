@@ -134,7 +134,6 @@ int fts_ctpm_i2c_hid2std(struct i2c_client *client)
 
     if ((0xeb == buf[0]) && (0xaa == buf[1]) && (0x08 == buf[2]))
     {
-        FTS_DEBUG("hidi2c change to stdi2c successful!!");
         bRet = 1;
     }
     else
@@ -163,8 +162,6 @@ void fts_get_chip_types(void)
         ic_type = IC_SERIALS - 1;
 
     chip_types = ctype[ic_type];
-
-    FTS_INFO("CHIP TYPE ID = 0x%02x%02x", chip_types.chip_idh, chip_types.chip_idl);
 }
 
 /************************************************************************
@@ -200,7 +197,6 @@ void fts_ctpm_rom_or_pram_reset(struct i2c_client *client)
 {
     u8 rst_cmd = FTS_REG_RESET_FW;
 
-    FTS_INFO("[UPGRADE]******Reset to romboot/bootloader******");
     fts_i2c_write(client, &rst_cmd, 1);
     /* The delay can't be changed */
     msleep(300);
@@ -395,7 +391,6 @@ enum FW_STATUS fts_ctpm_get_pram_or_rom_id(struct i2c_client *client)
     buf[1] = buf[2] = buf[3] = 0x00;
     fts_i2c_read(client, buf, 4, reg_val, 2);
 
-    FTS_DEBUG("[UPGRADE] Read ROM/PRAM/Bootloader id:0x%02x%02x", reg_val[0], reg_val[1]);
     if ((reg_val[0] == 0x00) || (reg_val[0] == 0xFF))
     {
         inRomBoot = FTS_RUN_IN_ERROR;
@@ -532,9 +527,6 @@ static int fts_ctpm_check_fw_status(struct i2c_client *client)
         }
     }
 
-    FTS_DEBUG("[UPGRADE]: chip_id = %02x%02x, chip_types.chip_idh = %02x%02x",
-              chip_id1, chip_id2, chip_types.chip_idh, chip_types.chip_idl);
-
     /* I2C No ACK 5 times, then return -EIO */
     if (i2c_noack_retry >= 5)
         return -EIO;
@@ -564,7 +556,6 @@ static int fts_ctpm_check_fw_ver(struct i2c_client *client)
     fts_i2c_read_reg(client, FTS_REG_FW_VER, &uc_tp_fm_ver);
     uc_host_fm_ver = fts_ctpm_get_app_ver();
 
-    FTS_DEBUG("[UPGRADE]: uc_tp_fm_ver = 0x%x, uc_host_fm_ver = 0x%x!!", uc_tp_fm_ver, uc_host_fm_ver);
     if (uc_tp_fm_ver < uc_host_fm_ver)
     {
         return 1;
@@ -592,7 +583,6 @@ static int fts_ctpm_check_need_upgrade(struct i2c_client *client)
 
     /* 1. veriry FW APP is valid or not */
     fw_status = fts_ctpm_check_fw_status(client);
-    FTS_DEBUG("[UPGRADE]: fw_status = %d!!", fw_status);
     if (fw_status < 0)
     {
         /* I2C no ACK, return immediately */
@@ -605,33 +595,27 @@ static int fts_ctpm_check_need_upgrade(struct i2c_client *client)
     }
     else if (fw_status == FTS_RUN_IN_APP)
     {
-        FTS_INFO("[UPGRADE]**********FW APP valid**********");
 
         if (fts_ctpm_get_i_file(client, 1) != 0)
         {
-            FTS_DEBUG("[UPGRADE]******Get upgrade file(fw) fail******");
             return -EIO;
         }
 
         if (fts_ctpm_check_fw_ver(client) == 1)
         {
-            FTS_DEBUG("[UPGRADE]**********need upgrade fw**********");
             bUpgradeFlag = true;
         }
         else
         {
-            FTS_DEBUG("[UPGRADE]**********Don't need upgrade fw**********");
             bUpgradeFlag = false;
         }
     }
     else
     {
         /* if app is invalid, reset to run ROM */
-        FTS_INFO("[UPGRADE]**********FW APP invalid**********");
         fts_ctpm_rom_or_pram_reset(client);
         if (fts_ctpm_get_i_file(client, 0) != 0)
         {
-            FTS_DEBUG("[UPGRADE]******Get upgrade file(flash) fail******");
             fts_ctpm_rom_or_pram_reset(client);
             return -EIO;
         }
@@ -658,12 +642,9 @@ int fts_ctpm_auto_upgrade(struct i2c_client *client)
     int bUpgradeFlag = false;
     u8 uc_upgrade_times = 0;
 
-    FTS_DEBUG("[UPGRADE]********************check upgrade need or not********************");
     bUpgradeFlag = fts_ctpm_check_need_upgrade(client);
-    FTS_DEBUG("[UPGRADE]**********bUpgradeFlag = 0x%x**********", bUpgradeFlag);
     if (bUpgradeFlag <= 0)
     {
-        FTS_DEBUG("[UPGRADE]**********No Upgrade, exit**********");
         return 0;
     }
     else
@@ -673,14 +654,12 @@ int fts_ctpm_auto_upgrade(struct i2c_client *client)
         do
         {
             uc_upgrade_times++;
-            FTS_DEBUG("[UPGRADE]********************star upgrade(%d)********************", uc_upgrade_times);
 
             i_ret = fts_ctpm_fw_upgrade(client);
             if (i_ret == 0)
             {
                 /* upgrade success */
                 fts_i2c_read_reg(client, FTS_REG_FW_VER, &uc_tp_fm_ver);
-                FTS_DEBUG("[UPGRADE]********************Success upgrade to new fw version 0x%x********************", uc_tp_fm_ver);
 
                 fts_ctpm_auto_clb(client);
                 break;
@@ -706,7 +685,6 @@ static void fts_ctpm_update_work_func(struct work_struct *work)
 {
     int i_ret = 0;
 
-    FTS_DEBUG("[UPGRADE]******************************FTS enter upgrade******************************");
     fts_irq_disable();
 
     i_ret = fts_ctpm_auto_upgrade(fts_i2c_client);
@@ -723,8 +701,6 @@ static void fts_ctpm_update_work_func(struct work_struct *work)
 #endif
 
     fts_irq_enable();
-
-    FTS_DEBUG("[UPGRADE]******************************FTS exit upgrade******************************");
 }
 
 /*****************************************************************************

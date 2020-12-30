@@ -172,12 +172,10 @@ static ssize_t fts_gesture_store(struct device *dev, struct device_attribute *at
 
     if (FTS_SYSFS_ECHO_ON(buf))
     {
-        FTS_INFO("[GESTURE]enable gesture");
         fts_gesture_data.mode = ENABLE;
     }
     else if (FTS_SYSFS_ECHO_OFF(buf))
     {
-        FTS_INFO("[GESTURE]disable gesture");
         fts_gesture_data.mode = DISABLE;
     }
 
@@ -260,7 +258,6 @@ static void fts_gesture_report(struct input_dev *input_dev, int gesture_id)
     int gesture;
 
     FTS_FUNC_ENTER();
-    FTS_DEBUG("fts gesture_id==0x%x ", gesture_id);
     switch (gesture_id)
     {
         case GESTURE_LEFT:
@@ -313,7 +310,6 @@ static void fts_gesture_report(struct input_dev *input_dev, int gesture_id)
     if (gesture != -1)
     {
 	if (gesture_id == GESTURE_DOUBLECLICK){
-	    FTS_DEBUG("Gesture Code=%d", gesture);
 	    input_report_key(input_dev, DOUBLE_CLICK, 1);
 	    input_sync(input_dev);
 	    input_report_key(input_dev, DOUBLE_CLICK, 0);
@@ -425,7 +421,6 @@ int fts_gesture_readdata(struct i2c_client *client)
         pointnum = buf[1];
         read_bytes = ((int)pointnum) * 4 + 2;
         buf[0] = FTS_REG_GESTURE_OUTPUT_ADDRESS;
-        FTS_DEBUG("[GESTURE]PointNum=%d", pointnum);
         ret = fts_gesture_read_buffer(client, buf, read_bytes);
         if (ret < 0)
         {
@@ -456,7 +451,6 @@ int fts_gesture_readdata(struct i2c_client *client)
     {
         gestrue_id = 0x24;
         fts_gesture_report(fts_input_dev, gestrue_id);
-        FTS_DEBUG("[GESTURE]%d check_gesture gestrue_id", gestrue_id);
         FTS_FUNC_EXIT();
         return -EPERM;
     }
@@ -479,7 +473,6 @@ int fts_gesture_readdata(struct i2c_client *client)
     */
     gestrue_id = fetch_object_sample(buf, pointnum);
     fts_gesture_report(fts_input_dev, gestrue_id);
-    FTS_DEBUG("[GESTURE]%d read gestrue_id", gestrue_id);
 
     for (i = 0; i < pointnum; i++)
     {
@@ -531,7 +524,6 @@ int fts_gesture_suspend(struct i2c_client *i2c_client)
     /* gesture not enable, return immediately */
     if (fts_gesture_data.mode == 0)
     {
-        FTS_DEBUG("gesture is disabled");
         FTS_FUNC_EXIT();
         return -EPERM;
     }
@@ -559,7 +551,6 @@ int fts_gesture_suspend(struct i2c_client *i2c_client)
     }
 
     fts_gesture_data.active = 1;
-    FTS_DEBUG("[GESTURE]Enter into gesture(suspend) successfully!");
     FTS_FUNC_EXIT();
     return 0;
 }
@@ -580,14 +571,12 @@ int fts_gesture_resume(struct i2c_client *client)
     /* gesture not enable, return immediately */
     if (fts_gesture_data.mode == 0)
     {
-        FTS_DEBUG("gesture is disabled");
         FTS_FUNC_EXIT();
         return -EPERM;
     }
 
     if (fts_gesture_data.active == 0)
     {
-        FTS_DEBUG("gesture is unactive");
         FTS_FUNC_EXIT();
         return -EPERM;
     }
@@ -640,8 +629,6 @@ static ssize_t gesture_write(struct file *filp, const char __user *buff, size_t 
 	FTS_ERROR("<%s> copy_from_user failed.\n", __func__);
         return -EPERM;
     }
-
-    FTS_DEBUG("%s copy_from_user :%s\n", __func__, temp);
 #if 0
     if (strnstr(temp, "on", strlen(temp)))
 	gesture_data.gesture_all_switch = 1;
@@ -655,7 +642,6 @@ static ssize_t gesture_write(struct file *filp, const char __user *buff, size_t 
      }
 #endif
 
-    FTS_DEBUG("%s gesture_data.gesture_all_switch :%d\n", __func__, gesture_data.gesture_all_switch);
 	tp_gesture_onoff = gesture_data.gesture_all_switch;
 
     return len;
@@ -714,16 +700,12 @@ int gesture_init(struct input_dev *input_dev)
     if (proc_entry == NULL) {
 	FTS_ERROR("CAN't create proc entry /proc/%s !", GESTURE_NODE);
 	return -EPERM;
-    } else {
-	FTS_DEBUG("Created proc entry /proc/%s !", GESTURE_NODE);
     }
 
     proc_data = proc_create(GESTURE_DATA, 0666, parent, &gesture_data_fops);
     if (proc_data == NULL) {
 	FTS_ERROR("CAN't create proc entry /proc/%s !", GESTURE_DATA);
 	return -EPERM;
-    } else {
-	FTS_DEBUG("Created proc entry /proc/%s !", GESTURE_DATA);
     }
     input_set_capability(input_dev, EV_KEY, DOUBLE_CLICK);
     __set_bit(DOUBLE_CLICK, input_dev->keybit);

@@ -108,11 +108,9 @@ int ft8006m_wait_tp_to_valid(struct i2c_client *client)
         ret = ft8006m_i2c_read_reg(client, FTS_REG_CHIP_ID, &reg_value);
         if ((ret < 0) || (reg_value != ft8006m_chip_types.chip_idh))
         {
-            FTS_INFO("TP Not Ready, ReadData = 0x%x", reg_value);
         }
         else if (reg_value == ft8006m_chip_types.chip_idh)
         {
-            FTS_INFO("TP Ready, Device ID = 0x%x", reg_value);
             return 0;
         }
         cnt++;
@@ -215,7 +213,6 @@ static int fts_input_event(struct input_dev *dev,
 	if (type == EV_SYN && code == SYN_CONFIG) {
 		sprintf(buffer, "%d", value);
 
-		FTS_INFO("FTS:Gesture on/off : %d", value);
 		if (value >= MXT_INPUT_EVENT_START && value <= MXT_INPUT_EVENT_END) {
 			if (value == MXT_INPUT_EVENT_WAKUP_MODE_ON) {
 				ft8006m_gesture_data.gesture_all_switch = 1;
@@ -260,7 +257,6 @@ static int ft8006m_input_dev_init(struct i2c_client *client, struct fts_ts_data 
     __set_bit(EV_KEY, input_dev->evbit);
     if (data->pdata->have_key)
     {
-        FTS_DEBUG("set key capabilities");
         for (len = 0; len < data->pdata->key_number; len++)
         {
             input_set_capability(input_dev, EV_KEY, data->pdata->keys[len]);
@@ -475,7 +471,6 @@ static int ft8006m_input_dev_report_key_event(struct ts_event *event, struct fts
 
             if (event->point_num == 0)
             {
-                FTS_DEBUG("Keys All Up!");
                 for (i = 0; i < data->pdata->key_number; i++)
                 {
                     input_report_key(data->input_dev, data->pdata->keys[i], 0);
@@ -493,12 +488,10 @@ static int ft8006m_input_dev_report_key_event(struct ts_event *event, struct fts
                             event->au8_touch_event[i] == 2)
                         {
                             input_report_key(data->input_dev, data->pdata->keys[i], 1);
-                            FTS_DEBUG("Key%d(%d, %d) DOWN!", i, event->au16_x[0], event->au16_y[0]);
                         }
                         else
                         {
                             input_report_key(data->input_dev, data->pdata->keys[i], 0);
-                            FTS_DEBUG("Key%d(%d, %d) Up!", i, event->au16_x[0], event->au16_y[0]);
                         }
                         break;
                     }
@@ -643,13 +636,6 @@ static int ft8006m_input_dev_report_a(struct ts_event *event, struct fts_ts_data
             input_report_abs(data->input_dev, ABS_MT_POSITION_Y, event->au16_y[i]);
 
             input_mt_sync(data->input_dev);
-
-#if FTS_REPORT_PRESSURE_EN
-
-
-#else
-            FTS_DEBUG("[B]P%d(%d, %d)[tm:%d] DOWN!", event->au8_finger_id[i], event->au16_x[i], event->au16_y[i], event->area[i]);
-#endif
         }
         else
         {
@@ -785,7 +771,6 @@ static int fts_read_touchdata(struct fts_ts_data *data)
 
         if ((event->au8_touch_event[i] == 0 || event->au8_touch_event[i] == 2) && (event->point_num == 0))
         {
-            FTS_DEBUG("abnormal touch data from fw");
             return -EPERM;
         }
     }
@@ -970,9 +955,6 @@ static int fts_get_dt_coords(struct device *dev, char *name,
 		pdata->x_max = coords[2];
 		pdata->y_max = coords[3];
 	}
-	FTS_INFO("Lcdname:%s \n", Lcm_name);
-	FTS_INFO("x_min:%d  y_min:%d    x_max:%d    y_max:%d", pdata->x_min, pdata->y_min, pdata->x_max, pdata->y_max);
-
     }
     else
     {
@@ -1028,10 +1010,6 @@ static int fts_parse_dt(struct device *dev, struct fts_ts_platform_data *pdata)
         {
             FTS_ERROR("Key X Coords undefined!");
         }
-        FTS_DEBUG("%d: (%d, %d, %d), [%d, %d, %d][%d]",
-                  pdata->key_number, pdata->keys[0], pdata->keys[1], pdata->keys[2],
-                  pdata->key_x_coords[0], pdata->key_x_coords[1], pdata->key_x_coords[2],
-                  pdata->key_y_coord);
     }
 
     /* reset, irq gpio info */
@@ -1051,7 +1029,6 @@ static int fts_parse_dt(struct device *dev, struct fts_ts_platform_data *pdata)
     if (!rc)
     {
         pdata->max_touch_number = temp_val;
-        FTS_DEBUG("max_touch_number=%d", pdata->max_touch_number);
     }
     else
     {
@@ -1210,7 +1187,6 @@ void hardwareinfo_set(void*drv_data)
 	}
 
 	snprintf(firmware_ver, HARDWARE_MAX_ITEM_LONGTH, "%s, %s, FW:0x%x", vendor_for_id, ic_name, fw_ver);
-	FTS_INFO("firmware_ver=%s\n", firmware_ver);
 
 	err = hardwareinfo_set_prop(HARDWARE_TP, firmware_ver);
         if (err < 0)
@@ -1232,16 +1208,12 @@ static int get_boot_mode(struct i2c_client *client)
         temp = cmdline_tp + strlen("androidboot.mode=");
         ret = strncmp(temp, "ffbm", strlen("ffbm"));
 		memcpy(cmd_line, temp, strlen("ffbm"));
-        FTS_INFO("cmd_line =%s \n", cmd_line);
         if (ret == 0) {
-			FTS_INFO("mode: ffbm\n");
 			return 1;/* factory mode*/
         } else {
-			FTS_INFO("mode: no ffbm\n");
 			return 2;/* not factory mode*/
 		}
 	}
-	FTS_INFO("Normal mode \n");
 
 	return 0;
 }
@@ -1431,18 +1403,12 @@ ft8006m_reset_proc(200);
     ft8006m_irq_enable();
     ft8006m_i2c_read_reg(client, FTS_REG_VENDOR_ID, &data->fw_vendor_id);
     ft8006m_i2c_read_reg(client, FTS_REG_FW_VER, data->fw_ver);
-    FTS_INFO("vendor_id=0x%x\n", data->fw_vendor_id);
-    FTS_INFO("tp_fw=0x%x\n", data->fw_ver[0]);
 
 #if FTS_AUTO_UPGRADE_EN
      err = get_boot_mode(client);
     if (err == 0)
     {
 	ft8006m_ctpm_upgrade_init();
-    }
-    else
-    {
-        FTS_INFO("Not in normal mode!\n");
     }
 
 #endif
@@ -1556,7 +1522,6 @@ int ft8006m_ts_suspend(struct device *dev)
     FTS_FUNC_ENTER();
     if (data->suspended)
     {
-        FTS_INFO("Already in suspend state");
         FTS_FUNC_EXIT();
         return -EPERM;
     }
@@ -1596,7 +1561,6 @@ int ft8006m_ts_suspend(struct device *dev)
     {
         FTS_ERROR("Set TP to sleep mode fail, ret=%d!", retval);
     }else {
-        FTS_INFO("go into sleep mode successfully\n");
 	break;
     }
     msleep(20);
@@ -1627,7 +1591,6 @@ static int ft8006m_ts_resume(struct device *dev)
     FTS_FUNC_ENTER();
     if (!data->suspended)
     {
-        FTS_DEBUG("Already in awake state");
         FTS_FUNC_EXIT();
         return -EPERM;
     }
