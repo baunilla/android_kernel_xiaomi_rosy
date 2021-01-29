@@ -125,6 +125,14 @@ include $(DLKM_DIR)/AndroidKernelModule.mk
 endif
 ###########################################################
 include $(CLEAR_VARS)
+LOCAL_MODULE              := $(AUDIO_CHIPSET)_aw87319.ko
+LOCAL_MODULE_KBUILD_NAME  := aw87319_dlkm.ko
+LOCAL_MODULE_TAGS         := optional
+LOCAL_MODULE_DEBUG_ENABLE := true
+LOCAL_MODULE_PATH         := $(KERNEL_MODULES_OUT)
+include $(DLKM_DIR)/AndroidKernelModule.mk
+###########################################################
+include $(CLEAR_VARS)
 LOCAL_MODULE              := $(AUDIO_CHIPSET)_stub.ko
 LOCAL_MODULE_KBUILD_NAME  := stub_dlkm.ko
 LOCAL_MODULE_TAGS         := optional
