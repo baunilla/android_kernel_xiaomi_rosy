@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015-2017, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -13,9 +14,10 @@
 
 #include "msm8953-qrd.dtsi"
 #include "msm8953-camera-sensor-qrd.dtsi"
+#include "msm8953-pinctrl.dtsi"
 
 &spmi_bus {
-	qcom,pmi8950@3 {
+	qcom,pmi8940@3 {
 		labibb: qpnp-labibb-regulator {
 			ibb_regulator: qcom,ibb@dc00 {
 				/delete-property/
@@ -33,6 +35,9 @@
 };
 
 #include "msm8953-mdss-panels.dtsi"
+#include "dsi-panel-ft8613-ebbg-5p7-720p-video.dtsi"
+#include "dsi-panel-ft8006m-boe-5p7-720p-video.dtsi"
+#include "dsi-panel-ft8613-csot-5p7-720p-video.dtsi"
 
 &tlmm {
 	pmx_mdss {
@@ -56,7 +61,16 @@
 };
 
 &dsi_panel_pwr_supply {
-		qcom,panel-supply-entry@2 {
+	qcom,panel-supply-entry@1 {
+		reg = <1>;
+		qcom,supply-name = "iovdd_gpio";
+		qcom,supply-min-voltage = <1800000>;
+		qcom,supply-max-voltage = <1800000>;
+		qcom,supply-enable-load = <100000>;
+		qcom,supply-disable-load = <100>;
+		qcom,supply-post-on-sleep = <10>;
+	};
+	qcom,panel-supply-entry@2 {
 		reg = <2>;
 		qcom,supply-name = "lab";
 		qcom,supply-min-voltage = <4600000>;
@@ -87,13 +101,14 @@
 &mdss_dsi0 {
 	lab-supply = <&lab_regulator>;
 	ibb-supply = <&ibb_regulator>;
-	/delete-property/ vdd-supply;
+	iovdd_gpio-supply = <&iovdd_gpio_vreg>;
 
-	qcom,dsi-pref-prim-pan = <&dsi_r69006_1080p_cmd>;
+	qcom,dsi-pref-prim-pan = <&dsi_ft8613_ebbg_5p7_720p_video>;
+	qcom,dsi-pref-sub-pan = <&dsi_ft8006m_boe_5p7_720p_video>;
+	qcom,dsi-pref-sub1-pan = <&dsi_ft8613_csot_5p7_720p_video>;
 	pinctrl-names = "mdss_default", "mdss_sleep";
-	pinctrl-0 = <&mdss_dsi_active &mdss_te_active>;
-	pinctrl-1 = <&mdss_dsi_suspend &mdss_te_suspend>;
-	qcom,platform-te-gpio = <&tlmm 24 0>;
+	pinctrl-0 = <&mdss_dsi_active>;
+	pinctrl-1 = <&mdss_dsi_suspend>;
 	qcom,platform-reset-gpio = <&tlmm 61 0>;
 };
 
@@ -104,6 +119,24 @@
 &labibb {
 	status = "ok";
 	qpnp,qpnp-labibb-mode = "lcd";
+};
+
+&dsi_ft8613_ebbg_5p7_720p_video {
+        qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
+        qcom,qpnp-ibb-init-lcd-voltage = <5800000>;
+        qcom,qpnp-lab-init-lcd-voltage = <5800000>;
+};
+
+&dsi_ft8006m_boe_5p7_720p_video {
+        qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
+        qcom,qpnp-ibb-init-lcd-voltage = <6000000>;
+        qcom,qpnp-lab-init-lcd-voltage = <6000000>;
+};
+
+&dsi_ft8613_csot_5p7_720p_video {
+        qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
+        qcom,qpnp-ibb-init-lcd-voltage = <5800000>;
+        qcom,qpnp-lab-init-lcd-voltage = <5800000>;
 };
 
 &dsi_r69006_1080p_cmd {
