@@ -1452,4 +1452,7 @@ config TOUCHSCREEN_RAYDIUM_CHIPSET
 
 	  If unsure, say N.
 
+source "drivers/input/touchscreen/FT8716/Kconfig"
+source "drivers/input/touchscreen/FT8006m/Kconfig"
+
 endif
