@@ -18,9 +18,7 @@
 #include "msm_sd.h"
 #include "msm_cci.h"
 #include "msm_eeprom.h"
-#if defined(CONFIG_D1_ROSY)
 #include "msm_eeprom_otp_interface.h"
-#endif
 
 #undef CDBG
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
@@ -1082,10 +1080,8 @@ static int msm_eeprom_spi_setup(struct spi_device *spi)
 	int rc = 0;
 
 	e_ctrl = kzalloc(sizeof(*e_ctrl), GFP_KERNEL);
-	if (!e_ctrl) {
-		pr_err("%s:%d kzalloc failed\n", __func__, __LINE__);
+	if (!e_ctrl)
 		return -ENOMEM;
-	}
 	e_ctrl->eeprom_v4l2_subdev_ops = &msm_eeprom_subdev_ops;
 	e_ctrl->eeprom_mutex = &msm_eeprom_mutex;
 	client = &e_ctrl->i2c_client;
@@ -1096,7 +1092,6 @@ static int msm_eeprom_spi_setup(struct spi_device *spi)
 
 	spi_client = kzalloc(sizeof(*spi_client), GFP_KERNEL);
 	if (!spi_client) {
-		pr_err("%s:%d kzalloc failed\n", __func__, __LINE__);
 		kfree(e_ctrl);
 		return -ENOMEM;
 	}
@@ -1524,13 +1519,6 @@ static int msm_eeprom_config32(struct msm_eeprom_ctrl_t *e_ctrl,
 		rc = eeprom_config_read_cal_data32(e_ctrl, argp);
 		break;
 	case CFG_EEPROM_INIT:
-		/*
-		if (e_ctrl->userspace_probe == 0) {
-			pr_err("%s:%d Eeprom already probed at kernel boot",
-				__func__, __LINE__);
-			rc = -EINVAL;
-			break;
-		}*/
 		if (e_ctrl->cal_data.num_data == 0) {
 			rc = eeprom_init_config32(e_ctrl, argp);
 			if (rc < 0)
@@ -1625,10 +1613,8 @@ static int msm_eeprom_platform_probe(struct platform_device *pdev)
 	CDBG("%s E\n", __func__);
 
 	e_ctrl = kzalloc(sizeof(*e_ctrl), GFP_KERNEL);
-	if (!e_ctrl) {
-		pr_err("%s:%d kzalloc failed\n", __func__, __LINE__);
+	if (!e_ctrl)
 		return -ENOMEM;
-	}
 	e_ctrl->eeprom_v4l2_subdev_ops = &msm_eeprom_subdev_ops;
 	e_ctrl->eeprom_mutex = &msm_eeprom_mutex;
 
@@ -1650,7 +1636,6 @@ static int msm_eeprom_platform_probe(struct platform_device *pdev)
 	e_ctrl->i2c_client.cci_client = kzalloc(sizeof(
 		struct msm_camera_cci_client), GFP_KERNEL);
 	if (!e_ctrl->i2c_client.cci_client) {
-		pr_err("%s failed no memory\n", __func__);
 		rc = -ENOMEM;
 		goto ectrl_free;
 	}
@@ -1658,7 +1643,6 @@ static int msm_eeprom_platform_probe(struct platform_device *pdev)
 	e_ctrl->eboard_info = kzalloc(sizeof(
 		struct msm_eeprom_board_info), GFP_KERNEL);
 	if (!e_ctrl->eboard_info) {
-		pr_err("%s failed line %d\n", __func__, __LINE__);
 		rc = -ENOMEM;
 		goto cciclient_free;
 	}
@@ -1751,12 +1735,6 @@ static int msm_eeprom_platform_probe(struct platform_device *pdev)
 			goto memdata_free;
 		}
 
-		/*
-		if (!strcmp(eb_info->eeprom_name, "ov13850")) {
-				eeprom_init_ov13850_reg_otp(e_ctrl);
-		}
-		*/
-#if defined(CONFIG_D1_ROSY)
 		/* 1. init insensor otp */
 		if (!strcmp(eb_info->eeprom_name, "ovt_ov5675_i")){
 			printk("insensor eeprom todo init the otp register!\n");
@@ -1797,7 +1775,6 @@ static int msm_eeprom_platform_probe(struct platform_device *pdev)
 				goto power_down;
 			}
 		}
-#endif
 
 		rc = read_eeprom_memory(e_ctrl, &e_ctrl->cal_data);
 		if (rc < 0) {
@@ -1807,75 +1784,8 @@ static int msm_eeprom_platform_probe(struct platform_device *pdev)
 		for (j = 0; j < e_ctrl->cal_data.num_data; j++)
 			CDBG("memory_data[%d] = 0x%X\n", j,
 				e_ctrl->cal_data.mapdata[j]);
-if (!strcmp(eb_info->eeprom_name, "s5k3l8_ofilm_riva")) {
-			CDBG("match id for s5k3l8_ofilm_riva\n");
-			if (e_ctrl->cal_data.mapdata[0] == 0x55){
-				module_id = e_ctrl->cal_data.mapdata[1] & 0x1f;
-			}else{
-				module_id = -1;
-			}
-			printk("match id for s5k3l8_ofilm_riva module_id=%d\n", module_id);
-			if (module_id == 7) {
-				CDBG("match id for s5k3l8_ofilm_riva success\n");
-				main_module_id = module_id;
-			} else {
-				pr_err("%s match id for s5k3l8_ofilm_riva failed\n", __func__);
-				goto power_down;
-			}
-		}else if (!strcmp(eb_info->eeprom_name, "ov13855_qtech")) {
-			CDBG("match id for ov13855_qtech\n");
-			if (e_ctrl->cal_data.mapdata[0] == 0x55){
-				module_id = e_ctrl->cal_data.mapdata[1] & 0x1f;
-			}else{
-				module_id = -1;
-			}
-			printk("match id for ov13855_qtech module_id=%d\n", module_id);
-			if (module_id == 11) {
-				CDBG("match id for ov13855_qtech success\n");
-				main_module_id = module_id;
-			} else {
-				pr_err("%s match id for ov13855_qtech failed\n", __func__);
-				goto power_down;
-			}
-		}else if (!strcmp(eb_info->eeprom_name, "s5k5e8_ofilm_riva")) {
-			CDBG("match id for s5k5e8_ofilm_riva\n");
-			if (e_ctrl->cal_data.mapdata[16] == 0x55) {
-				module_id = e_ctrl->cal_data.mapdata[17] & 0x1f;
-			} else if (e_ctrl->cal_data.mapdata[8] == 0x55) {
-				module_id = e_ctrl->cal_data.mapdata[9] & 0x1f;
-			} else if (e_ctrl->cal_data.mapdata[0] == 0x55) {
-				module_id = e_ctrl->cal_data.mapdata[1] & 0x1f;
-			} else {
-				module_id = -1;
-			}
-			printk("match id for s5k5e8_ofilm_riva module_id=%d\n", module_id);
-			if (module_id == 7) {
-				CDBG("match id for s5k5e8_ofilm_riva success\n");
-				sub_module_id = module_id;
-			} else {
-				pr_err("%s match id for s5k5e8_ofilm_riva failed\n", __func__);
-				goto power_down;
-			}
-		}else if (!strcmp(eb_info->eeprom_name, "s5k5e8_qtech_riva")) {
-			CDBG("match id for s5k5e8_qtech_riva\n");
-			if (e_ctrl->cal_data.mapdata[16] == 0x55) {
-				module_id = e_ctrl->cal_data.mapdata[17] & 0x1f;
-			} else if (e_ctrl->cal_data.mapdata[8] == 0x55) {
-				module_id = e_ctrl->cal_data.mapdata[9] & 0x1f;
-			} else if (e_ctrl->cal_data.mapdata[0] == 0x55) {
-				module_id = e_ctrl->cal_data.mapdata[1] & 0x1f;
-			} else {
-				module_id = -1;
-			}
-			printk("match id for s5k5e8_qtech_riva module_id=%d\n", module_id);
-			if (module_id == 11) {
-				CDBG("match id for s5k5e8_qtech_riva success\n");
-				sub_module_id = module_id;
-			} else {
-				pr_err("%s match id for s5k5e8_qtech_riva failed\n", __func__);
-				goto power_down;
-			}
-		}else if (!strcmp(eb_info->eeprom_name, "ovt_ov12a10_i")) {
+
+		if (!strcmp(eb_info->eeprom_name, "ovt_ov12a10_i")) {
 			CDBG("match id for ovt_ov12a10_i\n");
 			if (e_ctrl->cal_data.mapdata[0] == 0x01){
 				module_id = e_ctrl->cal_data.mapdata[1] & 0x1f;
@@ -1952,6 +1862,7 @@ if (!strcmp(eb_info->eeprom_name, "s5k3l8_ofilm_riva")) {
 			goto power_down;
 		}
 		CDBG("%s eeprom module id: main_module_id=%d  sub_module_id=%d\n", __func__, main_module_id, sub_module_id);
+		
 		e_ctrl->is_supported |= msm_eeprom_match_crc(&e_ctrl->cal_data);
 
 		rc = msm_camera_power_down(power_info,

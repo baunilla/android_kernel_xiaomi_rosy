@@ -34,7 +34,6 @@ static int32_t msm_sensor_driver_platform_probe(struct platform_device *pdev);
 /* Static declaration */
 static struct msm_sensor_ctrl_t *g_sctrl[MAX_CAMERAS];
 
-#if defined(CONFIG_D1_ROSY)
 static const char *module_info[] = 
 {
 	"Unkonw",
@@ -54,27 +53,6 @@ static const char *module_info[] =
 	"Unknow",
 	"Liteon",
 };
-/*#else
-static const char *module_info[]=
-{
-	"Unkonw",
-	"Sunny",
-	"Huaquan",
-	"Fushikang",
-	"Guangzhen",
-	"Daling",
-	"Xinli",
-	"O-film",
-	"Boyi",
-	"Sanglaishi",
-	"Qunhui",
-	"Q-Tech",
-	"Unknow",
-	"Unknow",
-	"Unknow",
-	"Unknow",
-};*/
-#endif
 
 ssize_t kobj_fusion_id_show_back(struct kobject *kobject, struct attribute *attr, char *buf);
 struct attribute camera_attr_back = {
@@ -140,122 +118,6 @@ ssize_t kobj_fusion_id_show_front(struct kobject *kobject, struct attribute *att
 }
 
 struct kobject kobj_front;
-
-
-
-static uint16_t fusion_read_id_s5k3l8(struct msm_sensor_ctrl_t *s_ctrl)
-{
-	uint16_t value1, value3, value5;
-
-	struct msm_camera_i2c_client *sensor_i2c_client;
-	sensor_i2c_client = s_ctrl->sensor_i2c_client;
-
-	memset(fusionid_back, 0, sizeof(fusionid_back));
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x0100, 0x0100, 2);
-	mdelay(10);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x0a02, 0x0000, 2);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x0a00, 0x0100, 2);
-	mdelay(10);
-	sensor_i2c_client->i2c_func_tbl->i2c_read(sensor_i2c_client, 0x0a24, &value1, 2);
-	CDBG(" s5k3l8 fusion_sensor_readreg value1 =%d\n", value1);
-	sensor_i2c_client->i2c_func_tbl->i2c_read(sensor_i2c_client, 0x0a26, &value3, 2);
-	CDBG(" s5k3l8 fusion_sensor_readreg value3 =%d\n", value3);
-	sensor_i2c_client->i2c_func_tbl->i2c_read(sensor_i2c_client, 0x0a28, &value5, 1);
-	CDBG(" s5k3l8 fusion_sensor_readreg value5 =%d\n", value5);
-	sprintf(fusionid_back, "%d%d%d", value1, value3, value5);
-	CDBG(" s5k3l8 fusion_sensor_readreg fusionid=%s\n", fusionid_back);
-	return 0;
-}
-
-static uint16_t fusion_read_id_ov5675(struct msm_sensor_ctrl_t *s_ctrl)
-{
-	uint16_t data[15] = {0};
-	uint16_t *p = NULL;
-	uint8_t i;
-	struct msm_camera_i2c_client *sensor_i2c_client;
-	sensor_i2c_client = s_ctrl->sensor_i2c_client;
-
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x0100, 0x01, 1);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x5001, 0x02, 1);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x3d84, 0xC0, 1);
-
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x3d88, 0x70, 1);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x3d89, 0x00, 1);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x3d8a, 0x70, 1);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x3d8b, 0x0f, 1);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x3d81, 0x01, 1);
-	mdelay(10);
-
-	p = data;
-
-	memset(fusionid_front, 0, sizeof(fusionid_front));
-	for (i = 0; i < 15; i++) {
-	    sensor_i2c_client->i2c_func_tbl->i2c_read(sensor_i2c_client, 0x7000+i, p+i, 1);
-	    CDBG("data[%d]=%x\n", i, data[i]);
-	    sprintf(fusionid_front + strlen(fusionid_front), "%u", data[i]);
-	}
-	CDBG("fusionid_front=%s\n", fusionid_front);
-	return 0;
-}
-
-static uint16_t fusion_read_id_s5k5e8(struct msm_sensor_ctrl_t *s_ctrl)
-{
-	uint16_t data[8] = {0};
-	uint16_t *p = NULL;
-	uint8_t i;
-	struct msm_camera_i2c_client *sensor_i2c_client;
-	sensor_i2c_client = s_ctrl->sensor_i2c_client;
-
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x0a00, 0x04&0x00ff, 1);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x0a02, 0x00&0x00ff, 1);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x0a00, 0x01&0x00ff, 1);
-	mdelay(10);
-	p = data;
-
-	memset(fusionid_front, 0, sizeof(fusionid_front));
-	for (i = 0; i < 8; i++) {
-	    sensor_i2c_client->i2c_func_tbl->i2c_read(sensor_i2c_client, 0x0a04+i, p+i, 1);
-	    CDBG("data[%d]=%x\n", i, data[i]);
-	    sprintf(fusionid_front + strlen(fusionid_front), "%u", data[i]);
-	}
-	CDBG("fusionid_front=%s\n", fusionid_front);
-
-	return 0;
-}
-
-static uint16_t fusion_read_id_ov13855(struct msm_sensor_ctrl_t *s_ctrl)
-{
-	uint16_t data[16] = {0};
-	uint16_t *p = NULL;
-	uint16_t temp1 = 0x0;
-	uint8_t i;
-	struct msm_camera_i2c_client *sensor_i2c_client;
-	sensor_i2c_client = s_ctrl->sensor_i2c_client;
-
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x0100, 0x01, 1);
-	sensor_i2c_client->i2c_func_tbl->i2c_read(sensor_i2c_client, 0x5000, &temp1, 1);
-
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x5000, (0x00 & 0x10) | (temp1 & (~0x10)), 1);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x3d84, 0xC0, 1);
-
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x3d88, 0x70, 1);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x3d89, 0x00, 1);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x3d8a, 0x70, 1);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x3d8b, 0x0f, 1);
-	sensor_i2c_client->i2c_func_tbl->i2c_write(sensor_i2c_client, 0x3d81, 0x01, 1);
-	mdelay(10);
-
-	p = data;
-
-	memset(fusionid_back, 0, sizeof(fusionid_back));
-	for (i = 0; i < 15; i++) {
-	    sensor_i2c_client->i2c_func_tbl->i2c_read(sensor_i2c_client, 0x7000+i, p+i, 1);
-	    CDBG("data[%d]=%x\n", i, data[i]);
-	    sprintf(fusionid_back + strlen(fusionid_back), "%u", data[i]);
-	}
-	CDBG("fusionid_back=%s\n", fusionid_back);
-	return 0;
-}
 
 static int msm_sensor_platform_remove(struct platform_device *pdev)
 {
@@ -997,31 +859,7 @@ int32_t msm_sensor_driver_probe(void *setting,
 		goto free_slave_info;
 	}
 
-	if (!strcmp(slave_info->sensor_name, "s5k3l8_ofilm_riva")) {
-		if (main_module_id != 7) {
-			pr_err("failed: main_module_id %d, sensor is not %s", main_module_id, slave_info->sensor_name);
-			rc = -EINVAL;
-			goto free_slave_info;
-		}
-	}else if (!strcmp(slave_info->sensor_name, "ov13855_qtech")) {
-		if (main_module_id != 11) {
-			pr_err("failed: main_module_id %d, sensor is not %s", main_module_id, slave_info->sensor_name);
-			rc = -EINVAL;
-			goto free_slave_info;
-		}
-	}else if (!strcmp(slave_info->sensor_name, "s5k5e8_qtech_riva")) {
-		if (sub_module_id != 11) {
-			pr_err("failed: sub_module_id %d, sensor is not %s", sub_module_id, slave_info->sensor_name);
-			rc = -EINVAL;
-			goto free_slave_info;
-		}
-	}else if (!strcmp(slave_info->sensor_name, "s5k5e8_ofilm_riva")) {
-		if (sub_module_id != 7) {
-			pr_err("failed: sub_module_id %d, sensor is not %s", sub_module_id, slave_info->sensor_name);
-			rc = -EINVAL;
-			goto free_slave_info;
-		}
-	}else if (!strcmp(slave_info->sensor_name, "ovt_ov5675_i")) {
+	if (!strcmp(slave_info->sensor_name, "ovt_ov5675_i")) {
 		if (sub_module_id != 6) {
 			pr_err("failed: sub_module_id %d, sensor is not %s", sub_module_id, slave_info->sensor_name);
 			rc = -EINVAL;
@@ -1205,19 +1043,6 @@ CSID_TG:
 		goto free_camera_info;
 	}
 
-	if (!strcmp(slave_info->sensor_name, "ov13855_qtech")) {
-		fusion_read_id_ov13855(s_ctrl);
-	} else if (!strcmp(slave_info->sensor_name, "s5k3l8_ofilm_riva")) {
-		fusion_read_id_s5k3l8(s_ctrl);
-	} else if (!strcmp(slave_info->sensor_name, "ov5675_ofilm")) {
-		fusion_read_id_ov5675(s_ctrl);
-	} else if ((!strcmp(slave_info->sensor_name, "s5k5e8_qtech_riva")) || (!strcmp(slave_info->sensor_name, "s5k5e8_ofilm_riva"))) {
-		fusion_read_id_s5k5e8(s_ctrl);
-	} else {
-		printk("read fusion id fail\n");
-	}
-
-
 	pr_err("%s probe succeeded", slave_info->sensor_name);
 
 	/*
@@ -1271,7 +1096,7 @@ CSID_TG:
 	s_ctrl->sensordata->cam_slave_info = slave_info;
 
 	msm_sensor_fill_sensor_info(s_ctrl, probed_info, entity_name);
-#if defined(CONFIG_D1_ROSY)
+
 	hardwareinfo_set_prop(probed_info->position == BACK_CAMERA_B
 		?HARDWARE_BACK_CAM:HARDWARE_FRONT_CAM, probed_info->sensor_name);
 	if (main_module_id > 0){
@@ -1285,21 +1110,6 @@ CSID_TG:
 		hardwareinfo_set_prop(HARDWARE_FRONT_CAM_MOUDULE_ID, module_info[0]);
 	}
 
-#else
-  if (!strcmp(probed_info->sensor_name, "s5k3l8_ofilm_riva")){
-    hardwareinfo_set_prop(HARDWARE_BACK_CAM, "sam_s5k3l8_i");
-		hardwareinfo_set_prop(HARDWARE_BACK_CAM_MOUDULE_ID, "OFILM");
-  } else if (!strcmp(probed_info->sensor_name, "ov13855_qtech")){
-    hardwareinfo_set_prop(HARDWARE_BACK_CAM, "ovt_ov13855_ii");
-		hardwareinfo_set_prop(HARDWARE_BACK_CAM_MOUDULE_ID, "QTECH");
-  }else if (!strcmp(probed_info->sensor_name, "s5k5e8_ofilm_riva")){
-    hardwareinfo_set_prop(HARDWARE_FRONT_CAM, "sam_s5k5e8_i");
-		hardwareinfo_set_prop(HARDWARE_FRONT_CAM_MOUDULE_ID, "OFILM");
-  }else if (!strcmp(probed_info->sensor_name, "s5k5e8_qtech_riva")){
-    hardwareinfo_set_prop(HARDWARE_FRONT_CAM, "sam_s5k5e8_ii");
-		hardwareinfo_set_prop(HARDWARE_FRONT_CAM_MOUDULE_ID, "QTECH");
-  }
-#endif
 	/*
 	 * Set probe succeeded flag to 1 so that no other camera shall
 	 * probed on this slot
@@ -1324,10 +1134,8 @@ static int32_t msm_sensor_driver_get_dt_data(struct msm_sensor_ctrl_t *s_ctrl)
 	uint32_t cell_id;
 
 	s_ctrl->sensordata = kzalloc(sizeof(*sensordata), GFP_KERNEL);
-	if (!s_ctrl->sensordata) {
-		pr_err("failed: no memory");
+	if (!s_ctrl->sensordata)
 		return -ENOMEM;
-	}
 
 	sensordata = s_ctrl->sensordata;
 
@@ -1446,18 +1254,13 @@ static int32_t msm_sensor_driver_parse(struct msm_sensor_ctrl_t *s_ctrl)
 	/* Allocate memory for sensor_i2c_client */
 	s_ctrl->sensor_i2c_client = kzalloc(sizeof(*s_ctrl->sensor_i2c_client),
 		GFP_KERNEL);
-	if (!s_ctrl->sensor_i2c_client) {
-		pr_err("failed: no memory sensor_i2c_client %pK",
-			s_ctrl->sensor_i2c_client);
+	if (!s_ctrl->sensor_i2c_client)
 		return -ENOMEM;
-	}
 
 	/* Allocate memory for mutex */
 	s_ctrl->msm_sensor_mutex = kzalloc(sizeof(*s_ctrl->msm_sensor_mutex),
 		GFP_KERNEL);
 	if (!s_ctrl->msm_sensor_mutex) {
-		pr_err("failed: no memory msm_sensor_mutex %pK",
-			s_ctrl->msm_sensor_mutex);
 		rc = -ENOMEM;
 		goto FREE_SENSOR_I2C_CLIENT;
 	}
@@ -1657,7 +1460,6 @@ static void __exit msm_sensor_driver_exit(void)
 	CDBG("Enter");
 	platform_driver_unregister(&msm_sensor_platform_driver);
 	i2c_del_driver(&msm_sensor_driver_i2c);
-	return;
 }
 
 module_init(msm_sensor_driver_init);
