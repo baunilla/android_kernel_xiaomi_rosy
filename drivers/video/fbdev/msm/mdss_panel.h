@@ -1,4 +1,5 @@
 /* Copyright (c) 2008-2020, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -650,6 +651,7 @@ struct mdss_panel_info {
 	u32 is_3d_panel;
 	u32 out_format;
 	u32 rst_seq[MDSS_DSI_RST_SEQ_LEN];
+	u32 pwr_off_rst_pull_high;
 	u32 rst_seq_len;
 	u32 vic; /* video identification code */
 	struct mdss_rect roi;
