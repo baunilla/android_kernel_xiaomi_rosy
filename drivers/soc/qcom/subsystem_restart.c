@@ -1744,7 +1744,11 @@ struct subsys_device *subsys_register(struct subsys_desc *desc)
 	subsys->desc->sysmon_pid = -1;
 	strlcpy(subsys->desc->fw_name, desc->name,
 			sizeof(subsys->desc->fw_name));
-
+#ifdef WT_FINAL_RELEASE
+	subsys->restart_level = RESET_SUBSYS_COUPLED;
+#else
+	subsys->restart_level = RESET_SOC;
+#endif
 	subsys->notify = subsys_notif_add_subsys(desc->name);
 
 	snprintf(subsys->wlname, sizeof(subsys->wlname), "ssr(%s)", desc->name);
