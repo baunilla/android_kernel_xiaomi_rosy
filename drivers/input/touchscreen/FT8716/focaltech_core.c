@@ -557,10 +557,10 @@ static int fts_input_dev_report_b(struct ts_event *event, struct fts_ts_data *da
         else
         {
             uppoint++;
+            input_mt_report_slot_state(data->input_dev, MT_TOOL_FINGER, false);
 #if FTS_REPORT_PRESSURE_EN
             input_report_abs(data->input_dev, ABS_MT_PRESSURE, 0);
 #endif
-            input_mt_report_slot_state(data->input_dev, MT_TOOL_FINGER, false);
             data->touchs &= ~BIT(event->au8_finger_id[i]);
 
         }
@@ -1063,7 +1063,7 @@ static int fb_notifier_callback(struct notifier_block *self,
         blank = evdata->data;
         if (*blank == FB_BLANK_UNBLANK)
             fts_ts_resume(&fts_data->client->dev);
-        else if (*blank == FB_BLANK_POWERDOWN || *blank == FB_BLANK_VSYNC_SUSPEND)
+        else if (*blank == FB_BLANK_POWERDOWN)
             fts_ts_suspend(&fts_data->client->dev);
     }
 
