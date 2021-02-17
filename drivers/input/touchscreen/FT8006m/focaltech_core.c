@@ -1596,10 +1596,6 @@ static int ft8006m_ts_resume(struct device *dev)
     }
     fts_release_all_finger();
 
-    if (!(ft8006m_gesture_data.gesture_all_switch)){
-        lcd_power_ctrl(data, 1);
-    }
-
 #if (!FTS_CHIP_IDC)
     ft8006m_reset_proc(200);
 #endif
