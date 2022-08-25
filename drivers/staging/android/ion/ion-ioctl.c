@@ -64,10 +64,14 @@ static struct ion_handle *pass_to_user(struct ion_handle *handle)
 }
 
 /* Must hold the client lock */
-static void user_ion_handle_put_nolock(struct ion_handle *handle)
+static int user_ion_handle_put_nolock(struct ion_handle *handle)
 {
+	int ret;
+
 	if (--handle->user_ref_count == 0)
-		ion_handle_put_nolock(handle);
+		ret = ion_handle_put_nolock(handle);
+
+	return ret;
 }
 
 static void user_ion_free_nolock(struct ion_client *client,
