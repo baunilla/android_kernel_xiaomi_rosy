@@ -1,4 +1,5 @@
 /* Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -10,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#define SENSOR_DRIVER_I2C "camera"
+#define SENSOR_DRIVER_I2C "i2c_camera"
 /* Header file declaration */
 #include "msm_sensor.h"
 #include "msm_sd.h"
@@ -745,6 +746,9 @@ static int32_t msm_sensor_driver_is_special_support(
 	return rc;
 }
 
+extern int main_module_id;
+extern int sub_module_id;
+
 /* static function definition */
 int32_t msm_sensor_driver_probe(void *setting,
 	struct msm_sensor_info_t *probed_info, char *entity_name)
@@ -962,6 +966,38 @@ int32_t msm_sensor_driver_probe(void *setting,
 		rc = -EINVAL;
 		goto free_slave_info;
 	}
+
+	if (!strcmp(slave_info->sensor_name, "ovt_ov5675_i")) {
+		if (sub_module_id != 6) {
+			pr_err("failed: sub_module_id %d, sensor is not %s", sub_module_id, slave_info->sensor_name);
+			rc = -EINVAL;
+			goto free_slave_info;
+		}
+	}else if (!strcmp(slave_info->sensor_name, "ovt_ov5675_ii")) {
+		if (sub_module_id != 7) {
+			pr_err("failed: sub_module_id %d, sensor is not %s", sub_module_id, slave_info->sensor_name);
+			rc = -EINVAL;
+			goto free_slave_info;
+		}
+	}else if (!strcmp(slave_info->sensor_name, "sony_imx486_ii")) {
+		if (main_module_id != 1) {
+			pr_err("failed: main_module_id %d, sensor is not %s", main_module_id, slave_info->sensor_name);
+			rc = -EINVAL;
+			goto free_slave_info;
+		}
+	}else if (!strcmp(slave_info->sensor_name, "ovt_ov12a10_i")) {
+		if (main_module_id != 7) {
+			pr_err("failed: main_module_id %d, sensor is not %s", main_module_id, slave_info->sensor_name);
+			rc = -EINVAL;
+			goto free_slave_info;
+		}
+	}else {
+		pr_err("sensor name is %s, is nothing to do", slave_info->sensor_name);
+		rc = -EINVAL;
+		goto free_slave_info;
+	}
+
+	pr_err("%s:%d camera sensor probe %s", __func__, __LINE__, slave_info->sensor_name);
 
 	/* Extract s_ctrl from camera id */
 	s_ctrl = g_sctrl[slave_info->camera_id];
